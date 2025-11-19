@@ -155,16 +155,21 @@ double CalculateVolume(const double entryPrice, const double slPrice)
 //+------------------------------------------------------------------+
 bool HasSymbolExposure()
   {
-   for(int i=0;i<PositionsTotal();i++)
+   for(int i=0; i<PositionsTotal(); i++)
      {
-      ulong ticket = PositionGetTicket(i);
-      if(ticket!=0 && PositionGetString(POSITION_SYMBOL) == _Symbol)
+      if(!PositionSelectByIndex(i))
+         continue;
+
+      if(PositionGetString(POSITION_SYMBOL) == _Symbol)
          return(true);
      }
 
-   for(int j=0;j<OrdersTotal();j++)
+   for(int j=0; j<OrdersTotal(); j++)
      {
-      if(OrderGetTicket(j)!=0 && OrderGetString(ORDER_SYMBOL) == _Symbol)
+      if(!OrderSelect(j, SELECT_BY_POS, MODE_TRADES))
+         continue;
+
+      if(OrderGetString(ORDER_SYMBOL) == _Symbol)
          return(true);
      }
 
