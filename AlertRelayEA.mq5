@@ -79,6 +79,9 @@ bool ParseAlertLine(const string line, string &symbol, int &direction, double &p
       return false;
 
    symbol = Trim(StringSubstr(trimmed, slashPos + 1, tfStart - (slashPos + 1)));
+   int bracketPos = StringFind(symbol, "(");
+   if(bracketPos >= 0)
+      symbol = Trim(StringSubstr(symbol, 0, bracketPos));
 
    string tfText = Trim(StringSubstr(trimmed, tfStart + 2, tfEnd - (tfStart + 2)));
    if(!ParseTimeframe(tfText, signalTf))
