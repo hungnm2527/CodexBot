@@ -1,0 +1,14 @@
+/*
+Theme Name: Starter Theme
+Theme URI: https://example.com/starter-theme
+Author: CodexBot
+Author URI: https://example.com
+Description: A minimal, modern starter theme with Home, About, and Contact page templates ready for customization.
+Version: 1.0.0
+License: GNU General Public License v2 or later
+License URI: http://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: starter-theme
+*/
+
+/* Import compiled assets */
+@import url('assets/css/style.css');
