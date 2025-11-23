@@ -19,7 +19,7 @@ $category_terms = get_categories(
 ?>
 
 <section class="hero-slider" aria-label="Featured stories">
-  <p class="section-label"><?php esc_html_e( 'Slider', 'starter-theme' ); ?></p>
+  <p class="section-label"><?php esc_html_e( 'Slider', 'first-theme' ); ?></p>
   <div class="slider-window">
     <?php
     $slide_index = 0;
@@ -39,7 +39,7 @@ $category_terms = get_categories(
             ?>
           </div>
           <div class="slide__content">
-            <p class="section-label"><?php echo esc_html( get_the_category_list( ', ' ) ? __( 'Category', 'starter-theme' ) : __( 'Featured', 'starter-theme' ) ); ?></p>
+            <p class="section-label"><?php echo esc_html( get_the_category_list( ', ' ) ? __( 'Category', 'first-theme' ) : __( 'Featured', 'first-theme' ) ); ?></p>
             <h2><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h2>
             <p><?php echo wp_kses_post( wp_trim_words( get_the_excerpt(), 26 ) ); ?></p>
             <div class="article-meta">
@@ -58,9 +58,9 @@ $category_terms = get_categories(
       <article class="slide is-active">
         <div class="slide__media"></div>
         <div class="slide__content">
-          <p class="section-label"><?php esc_html_e( 'Featured', 'starter-theme' ); ?></p>
-          <h2><?php esc_html_e( 'Add your first post to see it here.', 'starter-theme' ); ?></h2>
-          <p><?php esc_html_e( 'Use this wide area to spotlight an important story or promotion.', 'starter-theme' ); ?></p>
+          <p class="section-label"><?php esc_html_e( 'Featured', 'first-theme' ); ?></p>
+          <h2><?php esc_html_e( 'Add your first post to see it here.', 'first-theme' ); ?></h2>
+          <p><?php esc_html_e( 'Use this wide area to spotlight an important story or promotion.', 'first-theme' ); ?></p>
         </div>
       </article>
     <?php endif; ?>
@@ -69,7 +69,7 @@ $category_terms = get_categories(
     <div class="slider-dots" role="tablist" aria-label="Slider pagination">
       <?php for ( $i = 0; $i < $featured_query->found_posts; $i++ ) : ?>
         <button type="button" class="<?php echo 0 === $i ? 'is-active' : ''; ?>" data-target-slide="<?php echo esc_attr( $i ); ?>">
-          <span class="screen-reader-text"><?php printf( esc_html__( 'Show slide %d', 'starter-theme' ), $i + 1 ); ?></span>
+          <span class="screen-reader-text"><?php printf( esc_html__( 'Show slide %d', 'first-theme' ), $i + 1 ); ?></span>
         </button>
       <?php endfor; ?>
     </div>
@@ -85,7 +85,7 @@ $category_terms = get_categories(
       }
     } else {
       for ( $i = 0; $i < 6; $i++ ) {
-        echo '<span class="category-tile">' . esc_html__( 'Category', 'starter-theme' ) . '</span>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        echo '<span class="category-tile">' . esc_html__( 'Category', 'first-theme' ) . '</span>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
       }
     }
     ?>
@@ -94,7 +94,7 @@ $category_terms = get_categories(
 
 <section class="content-grid" aria-label="Content layout">
   <div>
-    <p class="section-label"><?php esc_html_e( 'Latest Articles', 'starter-theme' ); ?></p>
+    <p class="section-label"><?php esc_html_e( 'Latest Articles', 'first-theme' ); ?></p>
     <div class="article-list">
       <?php
       $posts_query = new WP_Query(
@@ -136,8 +136,8 @@ $category_terms = get_categories(
         <article class="article-card">
           <div class="thumb"></div>
           <div>
-            <h3><?php esc_html_e( 'No posts yet', 'starter-theme' ); ?></h3>
-            <p><?php esc_html_e( 'Create a few posts to see them listed here with thumbnails and excerpts.', 'starter-theme' ); ?></p>
+            <h3><?php esc_html_e( 'No posts yet', 'first-theme' ); ?></h3>
+            <p><?php esc_html_e( 'Create a few posts to see them listed here with thumbnails and excerpts.', 'first-theme' ); ?></p>
           </div>
         </article>
       <?php endif; ?>
@@ -146,7 +146,7 @@ $category_terms = get_categories(
 
   <aside class="sidebar" aria-label="Sidebar">
     <div class="widget">
-      <h4><?php esc_html_e( 'Latest posts', 'starter-theme' ); ?></h4>
+      <h4><?php esc_html_e( 'Latest posts', 'first-theme' ); ?></h4>
       <ul>
         <?php
         $latest_sidebar = new WP_Query(
@@ -162,14 +162,14 @@ $category_terms = get_categories(
           endwhile;
           wp_reset_postdata();
         else :
-          echo '<li>' . esc_html__( 'No posts yet.', 'starter-theme' ) . '</li>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+          echo '<li>' . esc_html__( 'No posts yet.', 'first-theme' ) . '</li>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         endif;
         ?>
       </ul>
     </div>
 
     <div class="widget">
-      <h4><?php esc_html_e( 'Featured posts', 'starter-theme' ); ?></h4>
+      <h4><?php esc_html_e( 'Featured posts', 'first-theme' ); ?></h4>
       <ul>
         <?php
         $featured_sidebar = new WP_Query(
@@ -186,14 +186,14 @@ $category_terms = get_categories(
           endwhile;
           wp_reset_postdata();
         else :
-          echo '<li>' . esc_html__( 'Mark a post as sticky to feature it.', 'starter-theme' ) . '</li>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+          echo '<li>' . esc_html__( 'Mark a post as sticky to feature it.', 'first-theme' ) . '</li>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         endif;
         ?>
       </ul>
     </div>
 
     <div class="widget">
-      <h4><?php esc_html_e( 'Tag cloud', 'starter-theme' ); ?></h4>
+      <h4><?php esc_html_e( 'Tag cloud', 'first-theme' ); ?></h4>
       <div class="tag-cloud">
         <?php
         $tags = wp_tag_cloud(
@@ -212,7 +212,7 @@ $category_terms = get_categories(
             echo $tag; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
           }
         } else {
-          echo '<span>' . esc_html__( 'No tags yet', 'starter-theme' ) . '</span>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+          echo '<span>' . esc_html__( 'No tags yet', 'first-theme' ) . '</span>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         }
         ?>
       </div>

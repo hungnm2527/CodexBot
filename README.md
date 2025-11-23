@@ -3,7 +3,7 @@
 This repository contains two MetaTrader 5 Expert Advisors **and** a standalone WordPress site (in `wordpress-site/`). The WordPress project is self-contained so it can be worked on separately from the trading code.
 
 ## WordPress site
-See `wordpress-site/README.md` for how to run the magazine-style homepage locally with the bundled starter theme.
+See `wordpress-site/README.md` for how to run the magazine-style homepage locally with the bundled First Theme.
 
 ## MetaTrader EAs
 This repository contains two MetaTrader 5 Expert Advisors:

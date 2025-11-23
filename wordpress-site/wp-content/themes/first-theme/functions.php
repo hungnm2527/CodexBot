@@ -1,6 +1,6 @@
 <?php
 /**
- * Starter Theme bootstrap file.
+ * First Theme bootstrap file.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
