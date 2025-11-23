@@ -10,5 +10,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 require get_template_directory() . '/inc/setup.php';
 require get_template_directory() . '/inc/assets.php';
 require get_template_directory() . '/inc/customizer.php';
+require get_template_directory() . '/inc/admin.php';
 
 add_filter( 'excerpt_more', '__return_empty_string' );
