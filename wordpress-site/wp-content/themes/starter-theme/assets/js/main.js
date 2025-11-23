@@ -1,13 +1,30 @@
 (function() {
   const toggle = document.querySelector('.nav-toggle');
   const menu = document.querySelector('nav ul');
-  if (toggle && menu) {
-    toggle.addEventListener('click', () => {
+  if (!toggle || !menu) return;
+
+  const media = window.matchMedia('(max-width: 720px)');
+
+  const syncMenu = () => {
+    if (media.matches) {
+      toggle.hidden = false;
       const expanded = toggle.getAttribute('aria-expanded') === 'true';
-      toggle.setAttribute('aria-expanded', String(!expanded));
-      menu.hidden = expanded;
-    });
-  }
+      menu.hidden = !expanded;
+    } else {
+      toggle.hidden = true;
+      toggle.setAttribute('aria-expanded', 'false');
+      menu.hidden = false;
+    }
+  };
+
+  toggle.addEventListener('click', () => {
+    const expanded = toggle.getAttribute('aria-expanded') === 'true';
+    toggle.setAttribute('aria-expanded', String(!expanded));
+    menu.hidden = expanded;
+  });
+
+  media.addEventListener('change', syncMenu);
+  syncMenu();
 })();
 
 (function() {

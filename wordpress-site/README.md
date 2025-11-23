@@ -1,20 +1,14 @@
-# Starter WordPress Site
+# Wordpress Site
 
-This folder contains a lightweight WordPress theme and structure you can drop into a fresh WordPress installation. It sets up navigation, essential page templates (home, about, contact), and a clean design ready for customization.
+This directory contains the standalone WordPress project and custom starter theme for the magazine-style homepage. It is isolated from the other trading-related files in the repository so you can work on the site independently.
 
 ## Getting started
-1. Copy the `wp-content/themes/starter-theme` folder into the `wp-content/themes` directory of your WordPress installation.
-2. Activate **Starter Theme** from the WordPress admin under **Appearance → Themes**.
-3. Create pages named **Home**, **About**, and **Contact**, and assign the **Home** page as the "Homepage" under **Settings → Reading**.
-4. Assign the **Primary Menu** location under **Appearance → Menus** (a sample fallback menu appears if none is assigned).
+1. Install WordPress in this folder (or point an existing local WordPress install to use `wp-content` here).
+2. Activate the **Starter Theme** from the WordPress admin.
+3. Assign the **Home** template to your front page to see the magazine layout with hero slider, category strip, article list, and sidebar widgets.
 
-### wp-admin management helpers
-- A branded login screen that uses your Customizer logo (or homepage logo) and improved styling.
-- Dashboard widget with quick links to the Customizer, Pages, and Navigation.
-- Cleaner admin menus with the Comments screen hidden by default.
-- File editing in the admin is disabled to keep deployments safer.
+## Structure
+- `wp-content/themes/starter-theme/` – theme templates, styles, and scripts
+- `wp-content/plugins/` – place any site-specific plugins here if needed
 
-## Development notes
-- Styles and scripts are enqueued from `assets/css/style.css` and `assets/js/main.js`.
-- Page templates (`front-page.php`, `page-about.php`, `page-contact.php`) provide starter layouts you can edit or extend.
-- The theme uses semantic HTML, accessible navigation, and responsive breakpoints for a smooth base experience.
+Keeping the WordPress site here ensures it stays separate from the unrelated MetaTrader EA code in the repository root.
