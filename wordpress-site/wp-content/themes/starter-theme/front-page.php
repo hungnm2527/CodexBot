@@ -1,11 +1,24 @@
 <?php
 /* Template Name: Home */
 get_header();
+
+$home_title = get_theme_mod( 'starter_theme_home_title', __( 'Welcome to Our Site', 'starter-theme' ) );
+$home_logo  = get_theme_mod( 'starter_theme_home_logo' );
 ?>
 <section class="hero">
   <div>
+    <?php if ( $home_logo ) : ?>
+      <div class="hero__logo">
+        <img src="<?php echo esc_url( $home_logo ); ?>" alt="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>">
+      </div>
+    <?php elseif ( has_custom_logo() ) : ?>
+      <div class="hero__logo">
+        <?php the_custom_logo(); ?>
+      </div>
+    <?php endif; ?>
+
     <p class="eyebrow"><?php bloginfo( 'name' ); ?></p>
-    <h1><?php esc_html_e( 'A flexible starter for your next WordPress project.', 'starter-theme' ); ?></h1>
+    <h1 class="hero__title"><?php echo esc_html( $home_title ); ?></h1>
     <p class="lead"><?php bloginfo( 'description' ); ?></p>
     <div class="cta">
       <a class="btn btn-primary" href="<?php echo esc_url( home_url( '/about' ) ); ?>"><?php esc_html_e( 'Learn more', 'starter-theme' ); ?></a>
