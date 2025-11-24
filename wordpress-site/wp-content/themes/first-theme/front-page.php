@@ -65,14 +65,14 @@ $category_terms = get_categories(
       </article>
     <?php endif; ?>
   </div>
-  <?php if ( $featured_query->found_posts > 1 ) : ?>
-    <div class="slider-dots" role="tablist" aria-label="Slider pagination">
-      <?php for ( $i = 0; $i < $featured_query->found_posts; $i++ ) : ?>
-        <button type="button" class="<?php echo 0 === $i ? 'is-active' : ''; ?>" data-target-slide="<?php echo esc_attr( $i ); ?>">
-          <span class="screen-reader-text"><?php printf( esc_html__( 'Show slide %d', 'first-theme' ), $i + 1 ); ?></span>
-        </button>
-      <?php endfor; ?>
-    </div>
+    <?php if ( $featured_query->post_count > 1 ) : ?>
+      <div class="slider-dots" role="tablist" aria-label="Slider pagination">
+        <?php for ( $i = 0; $i < $featured_query->post_count; $i++ ) : ?>
+          <button type="button" class="<?php echo 0 === $i ? 'is-active' : ''; ?>" data-target-slide="<?php echo esc_attr( $i ); ?>">
+            <span class="screen-reader-text"><?php printf( esc_html__( 'Show slide %d', 'first-theme' ), $i + 1 ); ?></span>
+          </button>
+        <?php endfor; ?>
+      </div>
   <?php endif; ?>
 </section>
 
