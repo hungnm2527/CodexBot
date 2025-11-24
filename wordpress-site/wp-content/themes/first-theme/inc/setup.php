@@ -7,12 +7,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-add_action( 'after_setup_theme', 'starter_theme_setup' );
+add_action( 'after_setup_theme', 'first_theme_setup' );
 /**
  * Configure core theme supports and defaults.
  */
-function starter_theme_setup() {
-	load_theme_textdomain( 'starter-theme', get_template_directory() . '/languages' );
+function first_theme_setup() {
+	load_theme_textdomain( 'first-theme', get_template_directory() . '/languages' );
 
 	add_theme_support( 'title-tag' );
 	add_theme_support( 'post-thumbnails' );
@@ -26,7 +26,7 @@ function starter_theme_setup() {
 	add_theme_support( 'responsive-embeds' );
 
 	register_nav_menus( [
-		'primary' => __( 'Primary Menu', 'starter-theme' ),
-		'footer'  => __( 'Footer Menu', 'starter-theme' ),
+		'primary' => __( 'Primary Menu', 'first-theme' ),
+		'footer'  => __( 'Footer Menu', 'first-theme' ),
 	] );
 }
