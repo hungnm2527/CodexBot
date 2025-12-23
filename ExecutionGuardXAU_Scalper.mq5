@@ -139,7 +139,7 @@ double ComputeMedianSpread()
    int count=spreadCount;
    double temp[256];
    for(int i=0;i<count;i++) temp[i]=spreadSamples[i].spread;
-   ArraySort(temp,count);
+   ArraySort(temp,count,0,MODE_ASCEND);
    if(count%2==1)
       return(temp[count/2]);
    return((temp[count/2-1]+temp[count/2])/2.0);
@@ -415,7 +415,10 @@ double NormalizeLot(double lot)
    double step=SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_STEP);
    lot=MathMax(minLot, MathMin(maxLot, lot));
    lot = MathFloor(lot/step)*step;
-   lot = NormalizeDouble(lot, (int)SymbolInfoInteger(_Symbol, SYMBOL_VOLUME_DIGITS));
+   long volDigits=0;
+   if(!SymbolInfoInteger(_Symbol, SYMBOL_VOLUME_DIGITS, volDigits))
+      volDigits=_Digits;
+   lot = NormalizeDouble(lot, (int)volDigits);
    return(lot);
 }
 
