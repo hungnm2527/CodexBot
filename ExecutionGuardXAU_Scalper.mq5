@@ -139,7 +139,7 @@ double ComputeMedianSpread()
    int count=spreadCount;
    double temp[256];
    for(int i=0;i<count;i++) temp[i]=spreadSamples[i].spread;
-   ArraySort(temp,count,0,MODE_ASCEND);
+   ArraySort(temp,count);
    if(count%2==1)
       return(temp[count/2]);
    return((temp[count/2-1]+temp[count/2])/2.0);
@@ -549,7 +549,7 @@ int OnInit()
 
 void OnDeinit(const int reason)
 {
-   (void)reason;
+   if(reason==REASON_CHARTCHANGE || reason==REASON_PROGRAM) { /* acknowledge */ }
    if(handleEMAfast!=INVALID_HANDLE) { IndicatorRelease(handleEMAfast); handleEMAfast=INVALID_HANDLE; }
    if(handleEMAslow!=INVALID_HANDLE) { IndicatorRelease(handleEMAslow); handleEMAslow=INVALID_HANDLE; }
    if(handleATR!=INVALID_HANDLE) { IndicatorRelease(handleATR); handleATR=INVALID_HANDLE; }
@@ -576,11 +576,13 @@ void OnTick()
 
 void OnTradeTransaction(const MqlTradeTransaction& trans,const MqlTradeRequest& request,const MqlTradeResult& result)
 {
-   (void)request;
-   (void)result;
    if(trans.type==TRADE_TRANSACTION_DEAL_ADD || trans.type==TRADE_TRANSACTION_ORDER_ADD)
    {
       nextAllowedTradeTime = TimeCurrent() + CooldownAfterTradeSeconds;
+   }
+   if(result.retcode!=TRADE_RETCODE_DONE && result.retcode!=TRADE_RETCODE_PLACED)
+   {
+      PrintFormat("Trade transaction retcode=%u for %s",result.retcode,request.symbol);
    }
 }
 //+------------------------------------------------------------------+
