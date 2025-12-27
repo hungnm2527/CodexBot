@@ -133,7 +133,7 @@ bool BuildSymbolList()
    string excludeClean = InpExcludeSymbols;
    StringReplace(excludeClean, " ", "");
    string exclusions[];
-   int exclCount = StringSplit(excludeClean, ',', exclusions);
+   int exclCount = StringSplit(excludeClean, (ushort)',', exclusions);
 
    int total = SymbolsTotal(!InpUseMarketWatchOnly);
    for(int i=0; i<total; ++i)
@@ -170,7 +170,7 @@ void ProcessSymbol(SymbolContext &ctx)
    if(!EnsureTradable(symbol))
       return;
 
-   double spreadPoints = SymbolInfoDouble(symbol, SYMBOL_SPREAD);
+   double spreadPoints = (double)SymbolInfoInteger(symbol, SYMBOL_SPREAD);
    if(spreadPoints <= 0 || spreadPoints > InpMaxSpreadPoints)
       return;
 
@@ -580,7 +580,7 @@ double CalculateAddVolume(const string symbol, const int magic, const int direct
 
    // multiplier mode
    string multiplierParts[];
-   int count = StringSplit(InpAddMultipliers, ',', multiplierParts);
+   int count = StringSplit(InpAddMultipliers, (ushort)',', multiplierParts);
    double factor = 1.0;
    if(count > 0)
      {
@@ -974,7 +974,7 @@ bool ValidateSLDistance(const string symbol, const int direction, const double e
    return(distance > stopLevel);
   }
 
-bool IsExcluded(const string symbol, string exclusions[], const int count)
+bool IsExcluded(const string symbol, string &exclusions[], const int count)
   {
    for(int i=0; i<count; ++i)
      {
