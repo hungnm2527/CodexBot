@@ -212,7 +212,6 @@ void ProcessSymbol(SymbolContext &ctx)
 //+------------------------------------------------------------------+
 //| Trend evaluation (D1)                                            |
 //+------------------------------------------------------------------+
-enum TrendDirection { TREND_NONE = 0, TREND_UP = 1, TREND_DOWN = -1 };
 
 TrendDirection EvaluateTrend(const string symbol)
   {
@@ -585,7 +584,7 @@ double CalculateAddVolume(const string symbol, const int magic, const int direct
    double factor = 1.0;
    if(count > 0)
      {
-      int idx = MathMin(positions, count-1);
+      int idx = MathMin(positions-1, count-1);
       factor = StringToDouble(multiplierParts[idx]);
       if(factor <= 0.0)
          factor = 1.0;
@@ -975,7 +974,7 @@ bool ValidateSLDistance(const string symbol, const int direction, const double e
    return(distance > stopLevel);
   }
 
-bool IsExcluded(const string symbol, string &exclusions[], const int count)
+bool IsExcluded(const string symbol, string exclusions[], const int count)
   {
    for(int i=0; i<count; ++i)
      {
