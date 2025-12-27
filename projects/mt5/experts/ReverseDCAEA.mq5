@@ -170,7 +170,10 @@ void ProcessSymbol(SymbolContext &ctx)
    if(!EnsureTradable(symbol))
       return;
 
-   double spreadPoints = (double)SymbolInfoInteger(symbol, SYMBOL_SPREAD);
+   long spreadInt = 0;
+   if(!SymbolInfoInteger(symbol, SYMBOL_SPREAD, spreadInt))
+      return;
+   double spreadPoints = (double)spreadInt;
    if(spreadPoints <= 0 || spreadPoints > InpMaxSpreadPoints)
       return;
 
@@ -564,7 +567,10 @@ double CalculateVolumeByRisk(const string symbol, const int direction, const dou
    double rawVolume = riskMoney / (stopTicks * tickValue);
    rawVolume = MathMax(volumeMin, MathMin(volumeMax, rawVolume));
    rawVolume = MathFloor(rawVolume / step) * step;
-   return(NormalizeDouble(rawVolume, (int)SymbolInfoInteger(symbol, SYMBOL_VOLUME_DIGITS)));
+   long volDigits = 0;
+   if(!SymbolInfoInteger(symbol, SYMBOL_VOLUME_DIGITS, volDigits))
+      return(0.0);
+   return(NormalizeDouble(rawVolume, (int)volDigits));
   }
 
 double CalculateAddVolume(const string symbol, const int magic, const int direction, const double entryPrice, const double slPrice, const int positions)
@@ -601,7 +607,10 @@ double CalculateAddVolume(const string symbol, const int magic, const int direct
    double volumeMin = SymbolInfoDouble(symbol, SYMBOL_VOLUME_MIN);
    double volumeMax = SymbolInfoDouble(symbol, SYMBOL_VOLUME_MAX);
    vol = MathMax(volumeMin, MathMin(volumeMax, vol));
-   return(NormalizeDouble(vol, (int)SymbolInfoInteger(symbol, SYMBOL_VOLUME_DIGITS)));
+   long volDigits = 0;
+   if(!SymbolInfoInteger(symbol, SYMBOL_VOLUME_DIGITS, volDigits))
+      return(0.0);
+   return(NormalizeDouble(vol, (int)volDigits));
   }
 
 //+------------------------------------------------------------------+
@@ -960,13 +969,18 @@ bool EnsureTradable(const string symbol)
    if(!SymbolSelect(symbol, true))
       return(false);
 
-   long tradeMode = SymbolInfoInteger(symbol, SYMBOL_TRADE_MODE);
+   long tradeMode = 0;
+   if(!SymbolInfoInteger(symbol, SYMBOL_TRADE_MODE, tradeMode))
+      return(false);
    return(tradeMode == SYMBOL_TRADE_MODE_FULL || tradeMode == SYMBOL_TRADE_MODE_LONGONLY || tradeMode == SYMBOL_TRADE_MODE_SHORTONLY);
   }
 
 bool ValidateSLDistance(const string symbol, const int direction, const double entry, const double sl)
   {
-   double stopLevel = SymbolInfoInteger(symbol, SYMBOL_TRADE_STOPS_LEVEL) * _Point;
+   long stopLevelInt = 0;
+   if(!SymbolInfoInteger(symbol, SYMBOL_TRADE_STOPS_LEVEL, stopLevelInt))
+      return(false);
+   double stopLevel = stopLevelInt * _Point;
    if(stopLevel <= 0)
       return(true);
 
@@ -976,9 +990,11 @@ bool ValidateSLDistance(const string symbol, const int direction, const double e
 
 bool IsExcluded(const string symbol, string &exclusions[], const int count)
   {
+   string symbolUpper = StringToUpper(symbol);
    for(int i=0; i<count; ++i)
      {
-      if(StringCompare(StringToUpper(symbol), StringToUpper(exclusions[i])) == 0)
+      string exUpper = StringToUpper(exclusions[i]);
+      if(symbolUpper == exUpper)
          return(true);
      }
    return(false);
