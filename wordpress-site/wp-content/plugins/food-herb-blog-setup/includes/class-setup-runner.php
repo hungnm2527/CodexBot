@@ -206,6 +206,87 @@ class FHBS_Setup_Runner {
                         ),
                 );
         }
+	private function create_categories() {
+		$structures = array(
+			array(
+				'name'     => 'Thực phẩm',
+				'slug'     => 'thuc-pham',
+				'children' => array(
+					array( 'name' => 'Trái cây', 'slug' => 'trai-cay' ),
+					array( 'name' => 'Rau củ', 'slug' => 'rau-cu' ),
+					array( 'name' => 'Ngũ cốc – hạt', 'slug' => 'ngu-coc-hat' ),
+					array( 'name' => 'Gia vị', 'slug' => 'gia-vi' ),
+					array( 'name' => 'Đồ uống', 'slug' => 'do-uong' ),
+				),
+			),
+			array(
+				'name'     => 'Dược liệu – thảo mộc',
+				'slug'     => 'duoc-lieu-thao-moc',
+				'children' => array(
+					array( 'name' => 'Dược liệu phổ biến', 'slug' => 'duoc-lieu-pho-bien' ),
+					array( 'name' => 'Cách dùng – bảo quản', 'slug' => 'cach-dung-bao-quan' ),
+					array( 'name' => 'Lưu ý – chống chỉ định', 'slug' => 'luu-y-chong-chi-dinh' ),
+				),
+			),
+			array(
+				'name'     => 'Trà & thức uống thảo mộc',
+				'slug'     => 'tra-thuc-uong-thao-moc',
+				'children' => array(
+					array( 'name' => 'Trà tiêu hoá', 'slug' => 'tra-tieu-hoa' ),
+					array( 'name' => 'Trà ngủ ngon', 'slug' => 'tra-ngu-ngon' ),
+					array( 'name' => 'Trà thanh nhiệt', 'slug' => 'tra-thanh-nhiet' ),
+					array( 'name' => 'Trà hỗ trợ giảm cân', 'slug' => 'tra-ho-tro-giam-can' ),
+				),
+			),
+			array(
+				'name'     => 'Công thức',
+				'slug'     => 'cong-thuc',
+				'children' => array(
+					array( 'name' => 'Bữa sáng', 'slug' => 'bua-sang' ),
+					array( 'name' => 'Bữa trưa', 'slug' => 'bua-trua' ),
+					array( 'name' => 'Bữa tối', 'slug' => 'bua-toi' ),
+					array( 'name' => 'Ăn vặt lành mạnh', 'slug' => 'an-vat-lanh-manh' ),
+					array( 'name' => 'Meal prep', 'slug' => 'meal-prep' ),
+				),
+			),
+			array(
+				'name'     => 'Kết hợp thực phẩm',
+				'slug'     => 'ket-hop-thuc-pham',
+				'children' => array(
+					array( 'name' => 'Nên kết hợp', 'slug' => 'nen-ket-hop' ),
+					array( 'name' => 'Không nên kết hợp', 'slug' => 'khong-nen-ket-hop' ),
+				),
+			),
+			array(
+				'name'     => 'Theo nhu cầu',
+				'slug'     => 'theo-nhu-cau',
+				'children' => array(
+					array( 'name' => 'Giảm cân', 'slug' => 'giam-can' ),
+					array( 'name' => 'Tiểu đường', 'slug' => 'tieu-duong' ),
+					array( 'name' => 'Dạ dày', 'slug' => 'da-day' ),
+					array( 'name' => 'Mỡ máu – tim mạch', 'slug' => 'mo-mau-tim-mach' ),
+					array( 'name' => 'Gan', 'slug' => 'gan' ),
+					array( 'name' => 'Gout', 'slug' => 'gout' ),
+				),
+			),
+			array(
+				'name'     => 'Review & Gợi ý mua',
+				'slug'     => 'review-goi-y',
+				'children' => array(
+					array( 'name' => 'Top list', 'slug' => 'top-list' ),
+					array( 'name' => 'Review chi tiết', 'slug' => 'review-chi-tiet' ),
+				),
+			),
+		);
+
+		$log = array();
+
+		foreach ( $structures as $category ) {
+			$log = array_merge( $log, $this->create_category_branch( $category ) );
+		}
+
+		return $log;
+	}
 
 	/**
 	 * Create a category branch.
@@ -214,9 +295,9 @@ class FHBS_Setup_Runner {
 	 *
 	 * @return array
 	 */
-        private function create_category_branch( $category, $parent_id = 0 ) {
-                $log = array();
-                $term_id = 0;
+	private function create_category_branch( $category, $parent_id = 0 ) {
+		$log = array();
+		$term_id = 0;
 
 		$existing = term_exists( $category['slug'], 'category' );
 
@@ -234,66 +315,24 @@ class FHBS_Setup_Runner {
 				)
 			);
 
-                        if ( ! is_wp_error( $result ) ) {
-                                $term_id                                = (int) $result['term_id'];
-                                $this->category_ids[ $category['slug'] ] = $term_id;
-                                $log[]                                  = sprintf( __( 'Created category "%1$s" (ID %2$d).', 'food-herb-blog-setup' ), $category['name'], $term_id );
-                        } else {
-                                $log[] = sprintf( __( 'Failed to create category "%1$s": %2$s', 'food-herb-blog-setup' ), $category['name'], $result->get_error_message() );
-                                return $log;
-                        }
-                }
+			if ( ! is_wp_error( $result ) ) {
+				$term_id                                = (int) $result['term_id'];
+				$this->category_ids[ $category['slug'] ] = $term_id;
+				$log[]                                  = sprintf( __( 'Created category "%1$s" (ID %2$d).', 'food-herb-blog-setup' ), $category['name'], $term_id );
+			} else {
+				$log[] = sprintf( __( 'Failed to create category "%1$s": %2$s', 'food-herb-blog-setup' ), $category['name'], $result->get_error_message() );
+				return $log;
+			}
+		}
 
-                if ( ! empty( $category['children'] ) && ! empty( $term_id ) ) {
-                        foreach ( $category['children'] as $child ) {
-                                $log = array_merge( $log, $this->create_category_branch( $child, $term_id ) );
-                        }
-                }
+		if ( ! empty( $category['children'] ) && ! empty( $term_id ) ) {
+			foreach ( $category['children'] as $child ) {
+				$log = array_merge( $log, $this->create_category_branch( $child, $term_id ) );
+			}
+		}
 
-                return $log;
-        }
-
-        /**
-         * Get status data for all predefined categories.
-         *
-         * @return array
-         */
-        public function get_category_status() {
-                $statuses = array();
-
-                foreach ( $this->get_category_structures() as $category ) {
-                        $statuses[] = $this->get_category_status_branch( $category );
-                }
-
-                return $statuses;
-        }
-
-        /**
-         * Get status for a single category branch.
-         *
-         * @param array $category Category data.
-         *
-         * @return array
-         */
-        private function get_category_status_branch( $category ) {
-                $term     = get_category_by_slug( $category['slug'] );
-                $children = array();
-
-                if ( ! empty( $category['children'] ) ) {
-                        foreach ( $category['children'] as $child ) {
-                                $children[] = $this->get_category_status_branch( $child );
-                        }
-                }
-
-                return array(
-                        'name'      => $category['name'],
-                        'slug'      => $category['slug'],
-                        'exists'    => ( $term && ! is_wp_error( $term ) ),
-                        'term_id'   => ( $term && ! is_wp_error( $term ) ) ? (int) $term->term_id : 0,
-                        'edit_link' => ( $term && ! is_wp_error( $term ) ) ? get_edit_term_link( $term->term_id, 'category' ) : '',
-                        'children'  => $children,
-                );
-        }
+		return $log;
+	}
 
 	/**
 	 * Create default tags.
@@ -340,9 +379,9 @@ class FHBS_Setup_Runner {
 	 *
 	 * @return array
 	 */
-        private function create_menu() {
-                $log = array();
-                $menu_name = 'Main Menu';
+	private function create_menu() {
+		$log = array();
+		$menu_name = 'Main Menu';
 		$menu      = wp_get_nav_menu_object( $menu_name );
 
 		if ( ! $menu ) {
@@ -420,44 +459,8 @@ class FHBS_Setup_Runner {
 			$log[] = __( 'Primary menu location not found in current theme; menu created without assignment.', 'food-herb-blog-setup' );
 		}
 
-                return $log;
-        }
-
-        /**
-         * Get overview data for the main menu.
-         *
-         * @return array
-         */
-        public function get_menu_overview() {
-                $menu_name = 'Main Menu';
-                $menu      = wp_get_nav_menu_object( $menu_name );
-                $menu_id   = $menu ? (int) $menu->term_id : 0;
-
-                $locations          = get_nav_menu_locations();
-                $primary_location   = isset( $locations['primary'] ) ? (int) $locations['primary'] : 0;
-                $is_primary_assigned = $menu_id && $primary_location && (int) $primary_location === (int) $menu_id;
-
-                $items     = $menu_id ? wp_get_nav_menu_items( $menu_id ) : array();
-                $top_level = array();
-
-                if ( ! empty( $items ) ) {
-                        foreach ( $items as $item ) {
-                                if ( 0 === (int) $item->menu_item_parent ) {
-                                        $top_level[] = wp_strip_all_tags( $item->title );
-                                }
-                        }
-                }
-
-                return array(
-                        'name'                        => $menu_name,
-                        'menu_id'                     => $menu_id,
-                        'exists'                      => (bool) $menu,
-                        'edit_url'                    => $menu_id ? admin_url( 'nav-menus.php?action=edit&menu=' . $menu_id ) : admin_url( 'nav-menus.php' ),
-                        'is_primary_assigned'         => $is_primary_assigned,
-                        'primary_location_available'  => array_key_exists( 'primary', $locations ),
-                        'top_level_items'             => $top_level,
-                );
-        }
+		return $log;
+	}
 
 	/**
 	 * Add a single menu item (recursively adds children).

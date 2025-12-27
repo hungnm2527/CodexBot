@@ -66,6 +66,23 @@ function fhbs_render_setup_page() {
                 <h1><?php esc_html_e( 'Food & Herb Blog Setup', 'food-herb-blog-setup' ); ?></h1>
                 <p><?php esc_html_e( 'Use this tool to create baseline pages, taxonomies, menus, and settings for your food and herb blog.', 'food-herb-blog-setup' ); ?></p>
                 <form method="post">
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+
+	$log_messages = array();
+	$nonce_action = 'fhbs_run_setup';
+
+	if ( isset( $_POST['fhbs_run_setup'] ) && check_admin_referer( $nonce_action ) ) {
+		$runner      = new FHBS_Setup_Runner();
+		$log_messages = $runner->run();
+		flush_rewrite_rules();
+	}
+	?>
+	<div class="wrap">
+		<h1><?php esc_html_e( 'Food & Herb Blog Setup', 'food-herb-blog-setup' ); ?></h1>
+		<p><?php esc_html_e( 'Use this tool to create baseline pages, taxonomies, menus, and settings for your food and herb blog.', 'food-herb-blog-setup' ); ?></p>
+		<form method="post">
 			<?php wp_nonce_field( $nonce_action ); ?>
 			<input type="hidden" name="fhbs_run_setup" value="1" />
 			<?php submit_button( __( 'Run Setup', 'food-herb-blog-setup' ) ); ?>
@@ -166,4 +183,12 @@ function fhbs_render_category_status_list( $categories ) {
                 </li>
                 <?php
         }
+			<ul>
+				<?php foreach ( $log_messages as $message ) : ?>
+					<li><?php echo esc_html( $message ); ?></li>
+				<?php endforeach; ?>
+			</ul>
+		<?php endif; ?>
+	</div>
+	<?php
 }
