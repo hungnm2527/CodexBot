@@ -990,10 +990,12 @@ bool ValidateSLDistance(const string symbol, const int direction, const double e
 
 bool IsExcluded(const string symbol, string &exclusions[], const int count)
   {
-   string symbolUpper = StringToUpper(symbol);
+   string symbolUpper = symbol;
+   StringToUpper(symbolUpper);
    for(int i=0; i<count; ++i)
      {
-      string exUpper = StringToUpper(exclusions[i]);
+      string exUpper = exclusions[i];
+      StringToUpper(exUpper);
       if(symbolUpper == exUpper)
          return(true);
      }
