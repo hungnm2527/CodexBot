@@ -1,11 +1,11 @@
-# Wordpress Site
+# WordPress Site
 
-This directory contains a standalone WordPress project scaffold and the custom **First Theme** for the magazine-style homepage. It is isolated from the other trading-related files in the repository so you can work on the site independently.
+This directory contains a standalone WordPress project scaffold and the custom **First Theme** for the magazine-style homepage. It lives under `projects/wordpress/site` in the monorepo so you can work on the site independently from the MetaTrader code.
 
 ## Project structure
 - `index.php` – entry point that boots WordPress.
 - `.htaccess` – standard WordPress rewrite rules for pretty permalinks.
-- `wp-config.php` – configuration file with placeholders for database credentials and salts.
+- `wp-config-sample.php` – configuration template; copy to `wp-config.php` and fill in credentials.
 - `wp-admin/`, `wp-includes/` – core directories to be populated by the WordPress download step.
 - `wp-content/` – user content and extensions (themes, plugins, uploads).
   - `themes/first-theme/` – custom magazine-style theme.
@@ -16,13 +16,13 @@ This directory contains a standalone WordPress project scaffold and the custom *
 ## Getting started
 1. **Download WordPress core**
    ```bash
-   cd wordpress-site
+   cd projects/wordpress/site
    ./scripts/bootstrap-wordpress.sh
    ```
    Set `WP_VERSION` if you need a specific release (e.g. `WP_VERSION=6.5.3 ./scripts/bootstrap-wordpress.sh`).
 
 2. **Configure the site**
-   - Update database credentials and salts in `wp-config.php`. Generate salts from https://api.wordpress.org/secret-key/1.1/salt/.
+   - Copy `wp-config-sample.php` to `wp-config.php`, then update database credentials and salts. Generate salts from https://api.wordpress.org/secret-key/1.1/salt/.
    - Optionally set `WP_HOME` and `WP_SITEURL` when deploying to a fixed domain.
 
 3. **File permissions**

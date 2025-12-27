@@ -1,0 +1,25 @@
+# General
+.DS_Store
+*.log
+*.tmp
+*.swp
+*.swo
+
+# MetaTrader
+*.ex5
+*.ex4
+*.mqproj
+/projects/mt5/build/
+
+# WordPress
+/projects/wordpress/site/wp-content/uploads/
+/projects/wordpress/site/wp-content/cache/
+/projects/wordpress/site/vendor/
+/projects/wordpress/site/node_modules/
+/projects/wordpress/site/.env
+
+# Tooling caches
+node_modules/
+vendor/
+/.idea/
+/.vscode/
