@@ -118,6 +118,94 @@ class FHBS_Setup_Runner {
 	 *
 	 * @return array
 	 */
+        private function create_categories() {
+                $log = array();
+
+                foreach ( $this->get_category_structures() as $category ) {
+                        $log = array_merge( $log, $this->create_category_branch( $category ) );
+                }
+
+                return $log;
+        }
+
+        /**
+         * Get the predefined category structures.
+         *
+         * @return array
+         */
+        private function get_category_structures() {
+                return array(
+                        array(
+                                'name'     => 'Thực phẩm',
+                                'slug'     => 'thuc-pham',
+                                'children' => array(
+                                        array( 'name' => 'Trái cây', 'slug' => 'trai-cay' ),
+                                        array( 'name' => 'Rau củ', 'slug' => 'rau-cu' ),
+                                        array( 'name' => 'Ngũ cốc – hạt', 'slug' => 'ngu-coc-hat' ),
+                                        array( 'name' => 'Gia vị', 'slug' => 'gia-vi' ),
+                                        array( 'name' => 'Đồ uống', 'slug' => 'do-uong' ),
+                                ),
+                        ),
+                        array(
+                                'name'     => 'Dược liệu – thảo mộc',
+                                'slug'     => 'duoc-lieu-thao-moc',
+                                'children' => array(
+                                        array( 'name' => 'Dược liệu phổ biến', 'slug' => 'duoc-lieu-pho-bien' ),
+                                        array( 'name' => 'Cách dùng – bảo quản', 'slug' => 'cach-dung-bao-quan' ),
+                                        array( 'name' => 'Lưu ý – chống chỉ định', 'slug' => 'luu-y-chong-chi-dinh' ),
+                                ),
+                        ),
+                        array(
+                                'name'     => 'Trà & thức uống thảo mộc',
+                                'slug'     => 'tra-thuc-uong-thao-moc',
+                                'children' => array(
+                                        array( 'name' => 'Trà tiêu hoá', 'slug' => 'tra-tieu-hoa' ),
+                                        array( 'name' => 'Trà ngủ ngon', 'slug' => 'tra-ngu-ngon' ),
+                                        array( 'name' => 'Trà thanh nhiệt', 'slug' => 'tra-thanh-nhiet' ),
+                                        array( 'name' => 'Trà hỗ trợ giảm cân', 'slug' => 'tra-ho-tro-giam-can' ),
+                                ),
+                        ),
+                        array(
+                                'name'     => 'Công thức',
+                                'slug'     => 'cong-thuc',
+                                'children' => array(
+                                        array( 'name' => 'Bữa sáng', 'slug' => 'bua-sang' ),
+                                        array( 'name' => 'Bữa trưa', 'slug' => 'bua-trua' ),
+                                        array( 'name' => 'Bữa tối', 'slug' => 'bua-toi' ),
+                                        array( 'name' => 'Ăn vặt lành mạnh', 'slug' => 'an-vat-lanh-manh' ),
+                                        array( 'name' => 'Meal prep', 'slug' => 'meal-prep' ),
+                                ),
+                        ),
+                        array(
+                                'name'     => 'Kết hợp thực phẩm',
+                                'slug'     => 'ket-hop-thuc-pham',
+                                'children' => array(
+                                        array( 'name' => 'Nên kết hợp', 'slug' => 'nen-ket-hop' ),
+                                        array( 'name' => 'Không nên kết hợp', 'slug' => 'khong-nen-ket-hop' ),
+                                ),
+                        ),
+                        array(
+                                'name'     => 'Theo nhu cầu',
+                                'slug'     => 'theo-nhu-cau',
+                                'children' => array(
+                                        array( 'name' => 'Giảm cân', 'slug' => 'giam-can' ),
+                                        array( 'name' => 'Tiểu đường', 'slug' => 'tieu-duong' ),
+                                        array( 'name' => 'Dạ dày', 'slug' => 'da-day' ),
+                                        array( 'name' => 'Mỡ máu – tim mạch', 'slug' => 'mo-mau-tim-mach' ),
+                                        array( 'name' => 'Gan', 'slug' => 'gan' ),
+                                        array( 'name' => 'Gout', 'slug' => 'gout' ),
+                                ),
+                        ),
+                        array(
+                                'name'     => 'Review & Gợi ý mua',
+                                'slug'     => 'review-goi-y',
+                                'children' => array(
+                                        array( 'name' => 'Top list', 'slug' => 'top-list' ),
+                                        array( 'name' => 'Review chi tiết', 'slug' => 'review-chi-tiet' ),
+                                ),
+                        ),
+                );
+        }
 	private function create_categories() {
 		$structures = array(
 			array(

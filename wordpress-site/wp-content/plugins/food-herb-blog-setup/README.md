@@ -5,6 +5,7 @@ Tự động dựng cấu trúc blog thực phẩm – dược liệu – trà t
 ## Tính năng
 - Tạo sẵn các trang nền (Trang chủ, Blog, Bắt đầu từ đây, Tra nhanh, Thư viện kiến thức, Review & Gợi ý mua, Disclaimer, Chính sách affiliate, Liên hệ).
 - Thiết lập cây chuyên mục, thẻ phổ biến và menu dropdown "Main Menu" (gán vị trí `primary` nếu theme hỗ trợ).
+- Trang công cụ hiển thị trạng thái cây category, nút mở trang quản lý Category/Menu để chỉnh sửa nhanh.
 - Đặt trang chủ tĩnh, trang blog và permalink `/%postname%/`.
 - Thêm block pattern cho bố cục Trang chủ: Hero, Theo nhu cầu, Tra nhanh, Công thức nổi bật, Review/Affiliate, Email opt-in.
 - Idempotent: chạy lại không tạo trùng (dựa trên slug).
