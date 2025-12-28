@@ -89,6 +89,11 @@ int           g_symbolTotal = 0;
 
 enum TrendDirection { TREND_NONE = 0, TREND_UP = 1, TREND_DOWN = -1 };
 
+double GetEquity()
+  {
+   return(AccountInfoDouble(ACCOUNT_EQUITY));
+  }
+
 //+------------------------------------------------------------------+
 //| Initialization                                                   |
 //+------------------------------------------------------------------+
@@ -552,7 +557,10 @@ double CalculateInitialSL(const string symbol, const int direction, const double
 //+------------------------------------------------------------------+
 double CalculateVolumeByRisk(const string symbol, const int direction, const double entryPrice, const double slPrice, const double riskPct)
   {
-   double riskMoney = AccountEquity() * (riskPct * 0.01);
+   double equity = GetEquity();
+   if(equity <= 0.0)
+      return(0.0);
+   double riskMoney = equity * (riskPct * 0.01);
    double tickSize  = 0.0;
    double tickValue = 0.0;
    double volumeMin = 0.0;
@@ -727,7 +735,7 @@ double CampaignFirstVolume(const string symbol, const int magic)
 double CurrentCampaignRiskPct(const string symbol, const int magic, const int direction)
   {
    double riskMoney = 0.0;
-   double equity = AccountEquity();
+   double equity = GetEquity();
    if(equity <= 0.0)
       return(0.0);
 
@@ -758,7 +766,7 @@ double CurrentCampaignRiskPct(const string symbol, const int magic, const int di
 double EstimateCampaignRiskPctWithAdd(const string symbol, const int magic, const int direction, const double entryPrice, const double slPrice)
   {
    double riskMoney = 0.0;
-   double equity = AccountEquity();
+   double equity = GetEquity();
    double tickValue = 0.0;
    double tickSize  = 0.0;
    if(!GetSymbolDouble(symbol, SYMBOL_TRADE_TICK_VALUE, tickValue)) return(0.0);
@@ -792,7 +800,7 @@ double EstimateCampaignRiskPctWithAdd(const string symbol, const int magic, cons
 
 double GetTotalOpenRiskPct()
   {
-   double equity = AccountEquity();
+   double equity = GetEquity();
    if(equity <= 0.0)
       return(0.0);
 

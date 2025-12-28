@@ -22,6 +22,7 @@ Guidelines compiled from recent compile issues to avoid regressions when buildin
 5) **Risk and price math**
    - Always retrieve tick size/value and volume step/limits via `SymbolInfo*` before sizing orders.
    - Normalize volumes using `SYMBOL_VOLUME_STEP` and `SYMBOL_VOLUME_DIGITS`; bail out if property reads fail.
+   - Use `AccountInfoDouble(ACCOUNT_EQUITY)` for equity-based sizing instead of deprecated helpers.
 
 6) **General compile hygiene**
    - Check every broker constraint (stop level/freeze level) using `SymbolInfoInteger` before placing/modifying stops.
