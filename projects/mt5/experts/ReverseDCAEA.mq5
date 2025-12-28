@@ -580,10 +580,10 @@ double CalculateVolumeByRisk(const string symbol, const int direction, const dou
    double rawVolume = riskMoney / (stopTicks * tickValue);
    rawVolume = MathMax(volumeMin, MathMin(volumeMax, rawVolume));
    rawVolume = MathFloor(rawVolume / step) * step;
-   long volDigits = 0;
-   if(!GetSymbolInteger(symbol, SYMBOL_VOLUME_DIGITS, volDigits))
+   long priceDigits = 0;
+   if(!GetSymbolInteger(symbol, SYMBOL_DIGITS, priceDigits))
       return(0.0);
-   return(NormalizeDouble(rawVolume, (int)volDigits));
+   return(NormalizeDouble(rawVolume, (int)priceDigits));
   }
 
 double CalculateAddVolume(const string symbol, const int magic, const int direction, const double entryPrice, const double slPrice, const int positions)
@@ -624,10 +624,10 @@ double CalculateAddVolume(const string symbol, const int magic, const int direct
    if(!GetSymbolDouble(symbol, SYMBOL_VOLUME_MIN, volumeMin)) return(0.0);
    if(!GetSymbolDouble(symbol, SYMBOL_VOLUME_MAX, volumeMax)) return(0.0);
    vol = MathMax(volumeMin, MathMin(volumeMax, vol));
-   long volDigits = 0;
-   if(!GetSymbolInteger(symbol, SYMBOL_VOLUME_DIGITS, volDigits))
+   long priceDigits = 0;
+   if(!GetSymbolInteger(symbol, SYMBOL_DIGITS, priceDigits))
       return(0.0);
-   return(NormalizeDouble(vol, (int)volDigits));
+   return(NormalizeDouble(vol, (int)priceDigits));
   }
 
 //+------------------------------------------------------------------+
@@ -1013,10 +1013,12 @@ bool ValidateSLDistance(const string symbol, const int direction, const double e
 
 bool IsExcluded(const string symbol, string &exclusions[], const int count)
   {
-   string symbolUpper = StringToUpper(symbol);
+   string symbolUpper = symbol;
+   StringToUpper(symbolUpper);
    for(int i=0; i<count; ++i)
      {
-      string exUpper = StringToUpper(exclusions[i]);
+      string exUpper = exclusions[i];
+      StringToUpper(exUpper);
       if(symbolUpper == exUpper)
          return(true);
      }
