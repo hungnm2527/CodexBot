@@ -150,6 +150,9 @@ bool BuildSymbolList()
       if(IsExcluded(symbol, exclusions, exclCount))
          continue;
 
+      if(!IsSymbolScannable(symbol))
+         continue;
+
       ArrayResize(g_symbols, g_symbolTotal+1);
       g_symbols[g_symbolTotal].name      = symbol;
       g_symbols[g_symbolTotal].lastH4Bar = 0;
@@ -1058,4 +1061,23 @@ bool GetSymbolDouble(const string symbol, const ENUM_SYMBOL_INFO_DOUBLE prop, do
 bool GetSymbolInteger(const string symbol, const ENUM_SYMBOL_INFO_INTEGER prop, long &value)
   {
    return(SymbolInfoInteger(symbol, prop, value));
+  }
+
+bool IsSymbolScannable(const string symbol)
+  {
+   if(!SymbolSelect(symbol, true))
+      return(false);
+
+   long tradeMode = 0;
+   if(!GetSymbolInteger(symbol, SYMBOL_TRADE_MODE, tradeMode))
+      return(false);
+   if(tradeMode == SYMBOL_TRADE_MODE_DISABLED)
+      return(false);
+
+   double tickSize = 0.0, volMin = 0.0, volStep = 0.0;
+   if(!GetSymbolDouble(symbol, SYMBOL_TRADE_TICK_SIZE, tickSize)) return(false);
+   if(!GetSymbolDouble(symbol, SYMBOL_VOLUME_MIN, volMin))         return(false);
+   if(!GetSymbolDouble(symbol, SYMBOL_VOLUME_STEP, volStep))       return(false);
+
+   return(tickSize > 0.0 && volMin > 0.0 && volStep > 0.0);
   }

@@ -27,5 +27,6 @@ Guidelines compiled from recent compile issues to avoid regressions when buildin
 6) **General compile hygiene**
    - Check every broker constraint (stop level/freeze level) using `SymbolInfoInteger` before placing/modifying stops.
    - Use closed bar data (e.g., `CopyRates(..., shift=1)`) to avoid repainting signals.
+   - Filter symbols before scanning: require `SYMBOL_TRADE_MODE` not disabled and positive `SYMBOL_TRADE_TICK_SIZE`, `SYMBOL_VOLUME_MIN`, `SYMBOL_VOLUME_STEP`.
 
 Keep this memo close when adding or editing EAs to prevent repeat compile errors.***
