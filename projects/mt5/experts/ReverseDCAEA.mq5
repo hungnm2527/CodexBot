@@ -581,7 +581,7 @@ double CalculateVolumeByRisk(const string symbol, const int direction, const dou
    rawVolume = MathMax(volumeMin, MathMin(volumeMax, rawVolume));
    rawVolume = MathFloor(rawVolume / step) * step;
    long volDigits = 0;
-   if(!SymbolInfoInteger(symbol, SYMBOL_VOLUME_DIGITS, volDigits))
+   if(!GetSymbolInteger(symbol, SYMBOL_VOLUME_DIGITS, volDigits))
       return(0.0);
    return(NormalizeDouble(rawVolume, (int)volDigits));
   }
@@ -625,7 +625,7 @@ double CalculateAddVolume(const string symbol, const int magic, const int direct
    if(!GetSymbolDouble(symbol, SYMBOL_VOLUME_MAX, volumeMax)) return(0.0);
    vol = MathMax(volumeMin, MathMin(volumeMax, vol));
    long volDigits = 0;
-   if(!SymbolInfoInteger(symbol, SYMBOL_VOLUME_DIGITS, volDigits))
+   if(!GetSymbolInteger(symbol, SYMBOL_VOLUME_DIGITS, volDigits))
       return(0.0);
    return(NormalizeDouble(vol, (int)volDigits));
   }
@@ -1051,4 +1051,9 @@ bool IsCampaignTicket(const ulong ticket, const string symbol, const int magic)
 bool GetSymbolDouble(const string symbol, const ENUM_SYMBOL_INFO_DOUBLE prop, double &value)
   {
    return(SymbolInfoDouble(symbol, prop, value));
+  }
+
+bool GetSymbolInteger(const string symbol, const ENUM_SYMBOL_INFO_INTEGER prop, long &value)
+  {
+   return(SymbolInfoInteger(symbol, prop, value));
   }
