@@ -16,6 +16,7 @@ input ENUM_TIMEFRAMES InpEntryTF            = PERIOD_H4;      // Entry timeframe
 input int    InpScanIntervalSec             = 15;             // Timer scan interval (seconds)
 input bool   InpUseMarketWatchOnly          = true;           // Use Market Watch symbols only
 input string InpExcludeSymbols              = "";             // Comma-separated exclusions
+input string InpAllowedSymbols              = "EURUSD,GBPUSD,USDJPY,USDCHF,AUDUSD,USDCAD,NZDUSD"; // Optional comma-separated whitelist; empty = auto
 input double InpMaxSpreadPoints             = 40;             // Max spread (points)
 input double InpMinAtrPoints                = 50;             // Min ATR on entry TF (points)
 
@@ -135,29 +136,46 @@ bool BuildSymbolList()
    ArrayFree(g_symbols);
    g_symbolTotal = 0;
 
+   // whitelist (optional)
+   string allowClean = InpAllowedSymbols;
+   StringReplace(allowClean, " ", "");
+   string allowParts[];
+   int allowCount = (allowClean != "") ? StringSplit(allowClean, (ushort)',', allowParts) : 0;
+
    string excludeClean = InpExcludeSymbols;
    StringReplace(excludeClean, " ", "");
    string exclusions[];
    int exclCount = StringSplit(excludeClean, (ushort)',', exclusions);
 
-   int total = SymbolsTotal(!InpUseMarketWatchOnly);
-   for(int i=0; i<total; ++i)
+   auto bool AddSymbolIfOk(const string symbol)
      {
-      string symbol = SymbolName(i, !InpUseMarketWatchOnly);
       if(symbol == "")
-         continue;
-
+         return(false);
       if(IsExcluded(symbol, exclusions, exclCount))
-         continue;
-
+         return(false);
       if(!IsSymbolScannable(symbol))
-         continue;
-
+         return(false);
+      for(int j=0; j<g_symbolTotal; ++j)
+         if(g_symbols[j].name == symbol)
+            return(false);
       ArrayResize(g_symbols, g_symbolTotal+1);
       g_symbols[g_symbolTotal].name      = symbol;
       g_symbols[g_symbolTotal].lastH4Bar = 0;
       g_symbols[g_symbolTotal].lastD1Bar = 0;
       ++g_symbolTotal;
+      return(true);
+     };
+
+   if(allowCount > 0)
+     {
+      for(int i=0; i<allowCount; ++i)
+         AddSymbolIfOk(allowParts[i]);
+     }
+   else
+     {
+      int total = SymbolsTotal(!InpUseMarketWatchOnly);
+      for(int i=0; i<total; ++i)
+         AddSymbolIfOk(SymbolName(i, !InpUseMarketWatchOnly));
      }
 
    if(g_symbolTotal == 0)

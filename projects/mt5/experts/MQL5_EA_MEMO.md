@@ -10,6 +10,7 @@ Guidelines compiled from recent compile issues to avoid regressions when buildin
 2) **String utilities**
    - `StringToUpper/StringToLower` return the converted string; they do **not** modify in place. Assign the return to your variable.
    - `StringSplit` with a single-character separator expects a `ushort` delimiter; pass `(ushort)','` and capture output into a `string &array[]`.
+   - Provide an optional whitelist input to cap symbol coverage (e.g., majors only); otherwise rely on filtered Market Watch/all symbols.
 
 3) **Arrays & references**
    - Functions taking arrays must declare parameters by reference (`type &arr[]`). Do not pass constants or temporary expressions to such parameters.
