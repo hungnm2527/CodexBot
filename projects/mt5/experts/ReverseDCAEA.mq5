@@ -553,11 +553,16 @@ double CalculateInitialSL(const string symbol, const int direction, const double
 double CalculateVolumeByRisk(const string symbol, const int direction, const double entryPrice, const double slPrice, const double riskPct)
   {
    double riskMoney = AccountEquity() * (riskPct * 0.01);
-   double tickSize  = SymbolInfoDouble(symbol, SYMBOL_TRADE_TICK_SIZE);
-   double tickValue = SymbolInfoDouble(symbol, SYMBOL_TRADE_TICK_VALUE);
-   double volumeMin = SymbolInfoDouble(symbol, SYMBOL_VOLUME_MIN);
-   double volumeMax = SymbolInfoDouble(symbol, SYMBOL_VOLUME_MAX);
-   double step      = SymbolInfoDouble(symbol, SYMBOL_VOLUME_STEP);
+   double tickSize  = 0.0;
+   double tickValue = 0.0;
+   double volumeMin = 0.0;
+   double volumeMax = 0.0;
+   double step      = 0.0;
+   if(!GetSymbolDouble(symbol, SYMBOL_TRADE_TICK_SIZE, tickSize))   return(0.0);
+   if(!GetSymbolDouble(symbol, SYMBOL_TRADE_TICK_VALUE, tickValue)) return(0.0);
+   if(!GetSymbolDouble(symbol, SYMBOL_VOLUME_MIN, volumeMin))       return(0.0);
+   if(!GetSymbolDouble(symbol, SYMBOL_VOLUME_MAX, volumeMax))       return(0.0);
+   if(!GetSymbolDouble(symbol, SYMBOL_VOLUME_STEP, step))           return(0.0);
 
    double stopDistance = MathAbs(entryPrice - slPrice);
    if(stopDistance <= 0.0 || tickSize <= 0.0 || tickValue <= 0.0)
@@ -602,10 +607,14 @@ double CalculateAddVolume(const string symbol, const int magic, const int direct
       baseVolume = CalculateVolumeByRisk(symbol, direction, entryPrice, slPrice, InpRiskPerCampaignPct);
 
    double vol = baseVolume * factor;
-   double step = SymbolInfoDouble(symbol, SYMBOL_VOLUME_STEP);
+   double step = 0.0;
+   if(!GetSymbolDouble(symbol, SYMBOL_VOLUME_STEP, step))
+      return(0.0);
    vol = MathFloor(vol / step) * step;
-   double volumeMin = SymbolInfoDouble(symbol, SYMBOL_VOLUME_MIN);
-   double volumeMax = SymbolInfoDouble(symbol, SYMBOL_VOLUME_MAX);
+   double volumeMin = 0.0;
+   double volumeMax = 0.0;
+   if(!GetSymbolDouble(symbol, SYMBOL_VOLUME_MIN, volumeMin)) return(0.0);
+   if(!GetSymbolDouble(symbol, SYMBOL_VOLUME_MAX, volumeMax)) return(0.0);
    vol = MathMax(volumeMin, MathMin(volumeMax, vol));
    long volDigits = 0;
    if(!SymbolInfoInteger(symbol, SYMBOL_VOLUME_DIGITS, volDigits))
@@ -734,8 +743,10 @@ double CurrentCampaignRiskPct(const string symbol, const int magic, const int di
          continue;
       double priceOpen = PositionGetDouble(POSITION_PRICE_OPEN);
       double volume = PositionGetDouble(POSITION_VOLUME);
-      double tickValue = SymbolInfoDouble(symbol, SYMBOL_TRADE_TICK_VALUE);
-      double tickSize  = SymbolInfoDouble(symbol, SYMBOL_TRADE_TICK_SIZE);
+      double tickValue = 0.0;
+      double tickSize  = 0.0;
+      if(!GetSymbolDouble(symbol, SYMBOL_TRADE_TICK_VALUE, tickValue)) continue;
+      if(!GetSymbolDouble(symbol, SYMBOL_TRADE_TICK_SIZE, tickSize))   continue;
       double distance  = (direction == 1) ? (priceOpen - sl) : (sl - priceOpen);
       if(distance <= 0.0)
          continue;
@@ -748,8 +759,10 @@ double EstimateCampaignRiskPctWithAdd(const string symbol, const int magic, cons
   {
    double riskMoney = 0.0;
    double equity = AccountEquity();
-   double tickValue = SymbolInfoDouble(symbol, SYMBOL_TRADE_TICK_VALUE);
-   double tickSize  = SymbolInfoDouble(symbol, SYMBOL_TRADE_TICK_SIZE);
+   double tickValue = 0.0;
+   double tickSize  = 0.0;
+   if(!GetSymbolDouble(symbol, SYMBOL_TRADE_TICK_VALUE, tickValue)) return(0.0);
+   if(!GetSymbolDouble(symbol, SYMBOL_TRADE_TICK_SIZE, tickSize))   return(0.0);
    if(equity <= 0.0 || tickSize <= 0.0 || tickValue <= 0.0)
       return(0.0);
 
@@ -796,8 +809,10 @@ double GetTotalOpenRiskPct()
       int direction = (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY) ? 1 : -1;
       double priceOpen = PositionGetDouble(POSITION_PRICE_OPEN);
       double vol = PositionGetDouble(POSITION_VOLUME);
-      double tickValue = SymbolInfoDouble(symbol, SYMBOL_TRADE_TICK_VALUE);
-      double tickSize  = SymbolInfoDouble(symbol, SYMBOL_TRADE_TICK_SIZE);
+      double tickValue = 0.0;
+      double tickSize  = 0.0;
+      if(!GetSymbolDouble(symbol, SYMBOL_TRADE_TICK_VALUE, tickValue)) continue;
+      if(!GetSymbolDouble(symbol, SYMBOL_TRADE_TICK_SIZE, tickSize))   continue;
       double distance  = (direction == 1) ? (priceOpen - sl) : (sl - priceOpen);
       if(distance <= 0.0 || tickSize <= 0.0)
          continue;
@@ -990,12 +1005,10 @@ bool ValidateSLDistance(const string symbol, const int direction, const double e
 
 bool IsExcluded(const string symbol, string &exclusions[], const int count)
   {
-   string symbolUpper = symbol;
-   StringToUpper(symbolUpper);
+   string symbolUpper = StringToUpper(symbol);
    for(int i=0; i<count; ++i)
      {
-      string exUpper = exclusions[i];
-      StringToUpper(exUpper);
+      string exUpper = StringToUpper(exclusions[i]);
       if(symbolUpper == exUpper)
          return(true);
      }
@@ -1024,4 +1037,10 @@ bool IsCampaignTicket(const ulong ticket, const string symbol, const int magic)
       return(PositionGetString(POSITION_SYMBOL) == symbol && (int)PositionGetInteger(POSITION_MAGIC) == magic);
      }
    return(false);
+  }
+
+// helper for safer symbol property access
+bool GetSymbolDouble(const string symbol, const ENUM_SYMBOL_INFO_DOUBLE prop, double &value)
+  {
+   return(SymbolInfoDouble(symbol, prop, value));
   }
