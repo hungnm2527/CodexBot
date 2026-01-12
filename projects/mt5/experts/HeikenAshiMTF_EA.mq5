@@ -53,6 +53,8 @@ CTrade      trade;
 SymbolState g_symbols[];
 int         g_symbolTotal = 0;
 
+bool SelectPositionByIndex(const int index);
+
 //+------------------------------------------------------------------+
 //| Expert initialization                                            |
 //+------------------------------------------------------------------+
@@ -223,7 +225,7 @@ void ManagePositions(const string symbol)
 
    for(int i=PositionsTotal()-1; i>=0; --i)
      {
-      if(!PositionSelectByIndex(i))
+      if(!SelectPositionByIndex(i))
          continue;
 
       string posSymbol = PositionGetString(POSITION_SYMBOL);
@@ -518,6 +520,18 @@ bool EnsureSymbol(const string symbol)
   }
 
 //+------------------------------------------------------------------+
+//| Select position by index                                         |
+//+------------------------------------------------------------------+
+bool SelectPositionByIndex(const int index)
+  {
+   ulong ticket = PositionGetTicket(index);
+   if(ticket == 0)
+      return(false);
+
+   return(PositionSelectByTicket(ticket));
+  }
+
+//+------------------------------------------------------------------+
 //| Count positions for symbol                                       |
 //+------------------------------------------------------------------+
 int CountSymbolPositions(const string symbol, const ulong magic)
@@ -525,7 +539,7 @@ int CountSymbolPositions(const string symbol, const ulong magic)
    int count = 0;
    for(int i=0; i<PositionsTotal(); ++i)
      {
-      if(!PositionSelectByIndex(i))
+      if(!SelectPositionByIndex(i))
          continue;
 
       if(PositionGetString(POSITION_SYMBOL) != symbol)
