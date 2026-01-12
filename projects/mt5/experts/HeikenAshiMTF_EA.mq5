@@ -133,8 +133,10 @@ void EvaluateSymbol(SymbolState &state)
    if(!EnsureSymbol(symbol))
       return;
 
-   MqlRates h1Rates[PullbackBars + 3];
-   if(CopyRates(symbol, PERIOD_H1, 0, PullbackBars + 3, h1Rates) < PullbackBars + 3)
+   int h1Needed = PullbackBars + 3;
+   MqlRates h1Rates[];
+   ArrayResize(h1Rates, h1Needed);
+   if(CopyRates(symbol, PERIOD_H1, 0, h1Needed, h1Rates) < h1Needed)
       return;
 
    datetime lastClosedH1 = h1Rates[1].time;
