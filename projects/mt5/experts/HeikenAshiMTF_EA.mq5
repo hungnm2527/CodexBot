@@ -573,8 +573,8 @@ double GetSpreadPoints(const string symbol)
 //+------------------------------------------------------------------+
 bool IsWithinSession()
   {
-   datetime now = TimeCurrent();
-   int hour = TimeHour(now);
+   datetime currentTime = TimeCurrent();
+   int hour = TimeHour(currentTime);
 
    if(SessionStartHour == SessionEndHour)
       return(true);
