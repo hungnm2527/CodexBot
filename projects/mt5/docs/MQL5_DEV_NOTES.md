@@ -39,6 +39,16 @@ This reference captures compile issues encountered while building the Heiken Ash
      int hour = TimeHour(currentTime);
      ```
 
+4. **Prefer `TimeToStruct` for session hour extraction**
+   - **Symptom:** some builds report `undeclared identifier` or parse errors around `TimeHour(...)`.
+   - **Fix:** use `TimeToStruct` and access `MqlDateTime.hour`.
+   - **Example:**
+     ```mql5
+     MqlDateTime dt;
+     TimeToStruct(TimeCurrent(), dt);
+     int hour = dt.hour;
+     ```
+
 ## General Guidance
 
 - Always prefer dynamic arrays for buffers sized by inputs or runtime values.

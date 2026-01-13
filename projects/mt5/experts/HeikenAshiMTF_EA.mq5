@@ -573,8 +573,9 @@ double GetSpreadPoints(const string symbol)
 //+------------------------------------------------------------------+
 bool IsWithinSession()
   {
-   datetime currentTime = TimeCurrent();
-   int hour = TimeHour(currentTime);
+   MqlDateTime dt;
+   TimeToStruct(TimeCurrent(), dt);
+   int hour = dt.hour;
 
    if(SessionStartHour == SessionEndHour)
       return(true);
