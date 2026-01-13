@@ -24,11 +24,18 @@ input string SymbolsList             = "XAUUSD,XAGUSD"; // Comma-separated symbo
 input bool   IncludeChartSymbol      = true;            // Include chart symbol
 input int    TrendBars               = 3;               // H4 HA candles for trend
 input int    PullbackBars            = 8;               // H1 pullback lookback
+input int    MinPullbackCandles      = 2;               // Minimum opposite HA candles in pullback
 input double RiskPercent             = 1.0;             // Risk % per trade
 input int    MaxPositionsPerSymbol   = 1;               // Max positions per symbol
 input int    MaxSpreadPoints         = 60;              // Max spread in points
 input int    SessionStartHour        = 7;               // Trading session start (server hour)
 input int    SessionEndHour          = 20;              // Trading session end (server hour)
+input bool   EnableConfirmStrength   = true;            // Enable HA body vs ATR confirmation
+input int    ConfirmAtrPeriod        = 14;              // ATR period for confirmation (H1)
+input double MinConfirmBodyAtr       = 0.35;            // Min HA body as ATR multiple
+input bool   EnableEmaFilter         = true;            // Enable EMA trend filter on H1
+input int    EmaPeriod               = 200;             // EMA period
+input ENUM_APPLIED_PRICE EmaAppliedPrice = PRICE_CLOSE; // EMA applied price
 input ENUM_SL_MODE StopLossMode      = SL_Swing;        // SL mode
 input int    SwingLookback           = 10;              // Swing SL lookback bars (H1)
 input int    BufferPoints            = 50;              // Swing SL buffer (points)
@@ -47,6 +54,8 @@ struct SymbolState
   {
    string   name;
    datetime lastH1Processed;
+   int      confirmAtrHandle;
+   int      emaHandle;
   };
 
 CTrade      trade;
@@ -54,6 +63,9 @@ SymbolState g_symbols[];
 int         g_symbolTotal = 0;
 
 bool SelectPositionByIndex(const int index);
+bool EnsureIndicatorHandles(SymbolState &state);
+bool GetConfirmAtr(SymbolState &state, double &atrValue);
+bool GetEmaValue(SymbolState &state, double &emaValue);
 
 //+------------------------------------------------------------------+
 //| Expert initialization                                            |
@@ -64,6 +76,12 @@ int OnInit()
 
    if(!BuildSymbolList())
       return(INIT_FAILED);
+
+   if(MinPullbackCandles < 1)
+      Print("HeikenAshiMTF_EA: MinPullbackCandles must be >= 1. Using 1.");
+
+   if(MinConfirmBodyAtr < 0.0)
+      Print("HeikenAshiMTF_EA: MinConfirmBodyAtr must be >= 0. Using 0.");
 
    PrintFormat("HeikenAshiMTF_EA initialized for %d symbols", g_symbolTotal);
    return(INIT_SUCCEEDED);
@@ -82,6 +100,27 @@ void OnTick()
   }
 
 //+------------------------------------------------------------------+
+//| Expert deinitialization                                          |
+//+------------------------------------------------------------------+
+void OnDeinit(const int reason)
+  {
+   for(int i=0; i<g_symbolTotal; ++i)
+     {
+      if(g_symbols[i].confirmAtrHandle != INVALID_HANDLE)
+        {
+         IndicatorRelease(g_symbols[i].confirmAtrHandle);
+         g_symbols[i].confirmAtrHandle = INVALID_HANDLE;
+        }
+
+      if(g_symbols[i].emaHandle != INVALID_HANDLE)
+        {
+         IndicatorRelease(g_symbols[i].emaHandle);
+         g_symbols[i].emaHandle = INVALID_HANDLE;
+        }
+     }
+  }
+
+//+------------------------------------------------------------------+
 //| Build symbol list                                                |
 //+------------------------------------------------------------------+
 bool BuildSymbolList()
@@ -94,6 +133,8 @@ bool BuildSymbolList()
       ArrayResize(g_symbols, g_symbolTotal+1);
       g_symbols[g_symbolTotal].name            = _Symbol;
       g_symbols[g_symbolTotal].lastH1Processed = 0;
+      g_symbols[g_symbolTotal].confirmAtrHandle = INVALID_HANDLE;
+      g_symbols[g_symbolTotal].emaHandle        = INVALID_HANDLE;
       ++g_symbolTotal;
      }
 
@@ -113,6 +154,8 @@ bool BuildSymbolList()
       ArrayResize(g_symbols, g_symbolTotal+1);
       g_symbols[g_symbolTotal].name            = parts[i];
       g_symbols[g_symbolTotal].lastH1Processed = 0;
+      g_symbols[g_symbolTotal].confirmAtrHandle = INVALID_HANDLE;
+      g_symbols[g_symbolTotal].emaHandle        = INVALID_HANDLE;
       ++g_symbolTotal;
      }
 
@@ -133,6 +176,9 @@ void EvaluateSymbol(SymbolState &state)
    string symbol = state.name;
 
    if(!EnsureSymbol(symbol))
+      return;
+
+   if(!EnsureIndicatorHandles(state))
       return;
 
    int h1Needed = PullbackBars + 3;
@@ -169,10 +215,12 @@ void EvaluateSymbol(SymbolState &state)
       return;
      }
 
-   bool pullback = HasPullback(h1Rates, trend);
+   int pullbackCount = 0;
+   bool pullback = HasPullback(h1Rates, trend, pullbackCount);
+   int minRequired = (MinPullbackCandles <= 1) ? 1 : MinPullbackCandles;
    if(!pullback)
      {
-      PrintFormat("%s skip: no pullback", symbol);
+      PrintFormat("%s skip: pullback count=%d < MinPullbackCandles=%d", symbol, pullbackCount, minRequired);
       return;
      }
 
@@ -180,6 +228,44 @@ void EvaluateSymbol(SymbolState &state)
      {
       PrintFormat("%s skip: no entry trigger", symbol);
       return;
+     }
+
+   if(EnableConfirmStrength)
+     {
+      double haOpen[], haClose[];
+      if(!CalculateHeikenAshi(h1Rates, 3, haOpen, haClose))
+         return;
+
+      double bodySize = MathAbs(haClose[1] - haOpen[1]);
+      double atrValue = 0.0;
+      if(!GetConfirmAtr(state, atrValue))
+         return;
+
+      double minBodyRatio = (MinConfirmBodyAtr < 0.0) ? 0.0 : MinConfirmBodyAtr;
+      if(bodySize < minBodyRatio * atrValue)
+        {
+         PrintFormat("%s skip: confirm body %.5f < %.5f (ATR %.5f * %.2f)", symbol, bodySize, minBodyRatio * atrValue, atrValue, minBodyRatio);
+         return;
+        }
+     }
+
+   if(EnableEmaFilter)
+     {
+      double emaValue = 0.0;
+      if(!GetEmaValue(state, emaValue))
+         return;
+
+      double closeValue = h1Rates[1].close;
+      if(trend > 0 && closeValue <= emaValue)
+        {
+         PrintFormat("%s skip: close %.5f <= EMA %.5f", symbol, closeValue, emaValue);
+         return;
+        }
+      if(trend < 0 && closeValue >= emaValue)
+        {
+         PrintFormat("%s skip: close %.5f >= EMA %.5f", symbol, closeValue, emaValue);
+         return;
+        }
      }
 
    double entryPrice = (trend > 0) ? SymbolInfoDouble(symbol, SYMBOL_ASK)
@@ -378,7 +464,7 @@ int GetTrendDirection(const string symbol)
 //+------------------------------------------------------------------+
 //| Pullback check                                                   |
 //+------------------------------------------------------------------+
-bool HasPullback(MqlRates &rates[], const int trend)
+bool HasPullback(MqlRates &rates[], const int trend, int &pullbackCount)
   {
    int total = ArraySize(rates);
    if(total < PullbackBars + 2)
@@ -388,16 +474,18 @@ bool HasPullback(MqlRates &rates[], const int trend)
    if(!CalculateHeikenAshi(rates, PullbackBars + 2, haOpen, haClose))
       return(false);
 
+   pullbackCount = 0;
    for(int i=1; i<=PullbackBars; ++i)
      {
       bool bullish = (haClose[i] > haOpen[i]);
       if(trend > 0 && !bullish)
-         return(true);
+         ++pullbackCount;
       if(trend < 0 && bullish)
-         return(true);
+         ++pullbackCount;
      }
 
-   return(false);
+   int minRequired = (MinPullbackCandles <= 1) ? 1 : MinPullbackCandles;
+   return(pullbackCount >= minRequired);
   }
 
 //+------------------------------------------------------------------+
@@ -445,6 +533,66 @@ bool CalculateHeikenAshi(MqlRates &rates[], const int count, double &haOpen[], d
         }
      }
 
+   return(true);
+  }
+
+//+------------------------------------------------------------------+
+//| Ensure indicator handles                                         |
+//+------------------------------------------------------------------+
+bool EnsureIndicatorHandles(SymbolState &state)
+  {
+   if(EnableConfirmStrength && state.confirmAtrHandle == INVALID_HANDLE)
+     {
+      state.confirmAtrHandle = iATR(state.name, PERIOD_H1, ConfirmAtrPeriod);
+      if(state.confirmAtrHandle == INVALID_HANDLE)
+        {
+         PrintFormat("%s: failed to create confirm ATR handle", state.name);
+         return(false);
+        }
+     }
+
+   if(EnableEmaFilter && state.emaHandle == INVALID_HANDLE)
+     {
+      state.emaHandle = iMA(state.name, PERIOD_H1, EmaPeriod, 0, MODE_EMA, EmaAppliedPrice);
+      if(state.emaHandle == INVALID_HANDLE)
+        {
+         PrintFormat("%s: failed to create EMA handle", state.name);
+         return(false);
+        }
+     }
+
+   return(true);
+  }
+
+//+------------------------------------------------------------------+
+//| Confirmation ATR helper                                          |
+//+------------------------------------------------------------------+
+bool GetConfirmAtr(SymbolState &state, double &atrValue)
+  {
+   if(state.confirmAtrHandle == INVALID_HANDLE)
+      return(false);
+
+   double buffer[];
+   if(CopyBuffer(state.confirmAtrHandle, 0, 1, 1, buffer) < 1)
+      return(false);
+
+   atrValue = buffer[0];
+   return(atrValue > 0.0);
+  }
+
+//+------------------------------------------------------------------+
+//| EMA helper                                                       |
+//+------------------------------------------------------------------+
+bool GetEmaValue(SymbolState &state, double &emaValue)
+  {
+   if(state.emaHandle == INVALID_HANDLE)
+      return(false);
+
+   double buffer[];
+   if(CopyBuffer(state.emaHandle, 0, 1, 1, buffer) < 1)
+      return(false);
+
+   emaValue = buffer[0];
    return(true);
   }
 
