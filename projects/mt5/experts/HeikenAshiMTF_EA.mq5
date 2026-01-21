@@ -49,6 +49,14 @@ input int    TrailSwingLookback      = 6;               // Trailing swing lookba
 input double TrailAtrMultiplier      = 1.2;             // Trailing ATR multiplier
 input int    SlippagePoints          = 20;              // Max slippage (points)
 input ulong  MagicBase               = 771100;          // Magic base
+input bool   EnableMartingale             = true;
+input double MartingaleMultiplier         = 2.0;   // factor per loss
+input int    MaxMartingaleSteps           = 3;     // max consecutive losses before cooldown
+input int    CooldownMinutesAfterMaxSteps = 240;   // pause trading for this symbol after max steps reached
+input double MaxMartingaleLots            = 5.0;   // absolute lots cap after scaling (safety)
+input double MaxMartingaleRiskPercent     = 2.0;   // cap effective risk % for a single trade after scaling (0 = disabled)
+input bool   FreezeSlTpDuringStreak       = true;  // keep SL/TP distance constant (points) during loss streak
+input bool   ResetOnBreakeven             = true;  // if profit >=0 resets streak/factor
 
 struct SymbolState
   {
@@ -56,6 +64,14 @@ struct SymbolState
    datetime lastH1Processed;
    int      confirmAtrHandle;
    int      emaHandle;
+   int      lossStreak;
+   double   mgFactor;
+   datetime lastDealCloseTime;
+   datetime cooldownUntil;
+   double   fixedSlPoints;
+   double   fixedTpPoints;
+   double   candidateSlPoints;
+   double   candidateTpPoints;
   };
 
 CTrade      trade;
@@ -66,6 +82,12 @@ bool SelectPositionByIndex(const int index);
 bool EnsureIndicatorHandles(SymbolState &state);
 bool GetConfirmAtr(SymbolState &state, double &atrValue);
 bool GetEmaValue(SymbolState &state, double &emaValue);
+string MgKey(const string symbol, const string field);
+void LoadMartingaleState(SymbolState &state);
+void SaveMartingaleState(const SymbolState &state);
+bool UpdateMartingaleFromHistory(SymbolState &state);
+double NormalizeVolume(const string symbol, const double vol);
+bool GetFixedDistancesFromHistory(const ulong positionId, const string symbol, const ulong magic, double &slPoints, double &tpPoints);
 
 //+------------------------------------------------------------------+
 //| Expert initialization                                            |
@@ -117,6 +139,9 @@ void OnDeinit(const int reason)
          IndicatorRelease(g_symbols[i].emaHandle);
          g_symbols[i].emaHandle = INVALID_HANDLE;
         }
+
+      if(EnableMartingale)
+         SaveMartingaleState(g_symbols[i]);
      }
   }
 
@@ -135,6 +160,16 @@ bool BuildSymbolList()
       g_symbols[g_symbolTotal].lastH1Processed = 0;
       g_symbols[g_symbolTotal].confirmAtrHandle = INVALID_HANDLE;
       g_symbols[g_symbolTotal].emaHandle        = INVALID_HANDLE;
+      g_symbols[g_symbolTotal].lossStreak       = 0;
+      g_symbols[g_symbolTotal].mgFactor         = 1.0;
+      g_symbols[g_symbolTotal].lastDealCloseTime = 0;
+      g_symbols[g_symbolTotal].cooldownUntil     = 0;
+      g_symbols[g_symbolTotal].fixedSlPoints     = 0.0;
+      g_symbols[g_symbolTotal].fixedTpPoints     = 0.0;
+      g_symbols[g_symbolTotal].candidateSlPoints = 0.0;
+      g_symbols[g_symbolTotal].candidateTpPoints = 0.0;
+      if(EnableMartingale)
+         LoadMartingaleState(g_symbols[g_symbolTotal]);
       ++g_symbolTotal;
      }
 
@@ -156,6 +191,16 @@ bool BuildSymbolList()
       g_symbols[g_symbolTotal].lastH1Processed = 0;
       g_symbols[g_symbolTotal].confirmAtrHandle = INVALID_HANDLE;
       g_symbols[g_symbolTotal].emaHandle        = INVALID_HANDLE;
+      g_symbols[g_symbolTotal].lossStreak       = 0;
+      g_symbols[g_symbolTotal].mgFactor         = 1.0;
+      g_symbols[g_symbolTotal].lastDealCloseTime = 0;
+      g_symbols[g_symbolTotal].cooldownUntil     = 0;
+      g_symbols[g_symbolTotal].fixedSlPoints     = 0.0;
+      g_symbols[g_symbolTotal].fixedTpPoints     = 0.0;
+      g_symbols[g_symbolTotal].candidateSlPoints = 0.0;
+      g_symbols[g_symbolTotal].candidateTpPoints = 0.0;
+      if(EnableMartingale)
+         LoadMartingaleState(g_symbols[g_symbolTotal]);
       ++g_symbolTotal;
      }
 
@@ -192,6 +237,9 @@ void EvaluateSymbol(SymbolState &state)
       return;
 
    state.lastH1Processed = lastClosedH1;
+
+   if(EnableMartingale)
+      UpdateMartingaleFromHistory(state);
 
    string skipReason = "";
 
@@ -274,19 +322,97 @@ void EvaluateSymbol(SymbolState &state)
       return;
 
    double sl = 0.0;
-   if(!CalculateStopLoss(symbol, trend, entryPrice, sl))
-      return;
+   double tp = 0.0;
+   bool useFrozenStops = false;
+   if(EnableMartingale && FreezeSlTpDuringStreak && state.lossStreak > 0 && state.fixedSlPoints > 0.0 && state.fixedTpPoints > 0.0)
+     {
+      double point = SymbolInfoDouble(symbol, SYMBOL_POINT);
+      if(point <= 0.0)
+         return;
+
+      int stopLevel = (int)SymbolInfoInteger(symbol, SYMBOL_TRADE_STOPS_LEVEL);
+      double minPoints = (stopLevel > 0) ? (double)stopLevel : 0.0;
+
+      double slPoints = MathMax(state.fixedSlPoints, minPoints);
+      double tpPoints = MathMax(state.fixedTpPoints, minPoints);
+
+      if(trend > 0)
+        {
+         sl = entryPrice - slPoints * point;
+         tp = entryPrice + tpPoints * point;
+        }
+      else
+        {
+         sl = entryPrice + slPoints * point;
+         tp = entryPrice - tpPoints * point;
+        }
+
+      if(sl > 0.0 && tp > 0.0)
+        {
+         useFrozenStops = true;
+         PrintFormat("%s MG freeze SL/TP: slPts=%.1f, tpPts=%.1f", symbol, slPoints, tpPoints);
+        }
+     }
+
+   if(!useFrozenStops)
+     {
+      if(!CalculateStopLoss(symbol, trend, entryPrice, sl))
+         return;
+
+      double slDistance = MathAbs(entryPrice - sl);
+      if(slDistance <= 0.0)
+         return;
+
+      tp = (trend > 0) ? entryPrice + slDistance * RewardRiskRatio
+                       : entryPrice - slDistance * RewardRiskRatio;
+     }
 
    double slDistance = MathAbs(entryPrice - sl);
    if(slDistance <= 0.0)
       return;
 
-   double tp = (trend > 0) ? entryPrice + slDistance * RewardRiskRatio
-                           : entryPrice - slDistance * RewardRiskRatio;
-
-   double volume = CalculateVolume(symbol, slDistance);
-   if(volume <= 0.0)
+   double baseVolume = CalculateVolume(symbol, slDistance);
+   if(baseVolume <= 0.0)
       return;
+
+   double volume = baseVolume;
+   if(EnableMartingale)
+     {
+      if(TimeCurrent() < state.cooldownUntil)
+        {
+         PrintFormat("%s skip: martingale cooldown active until %s", symbol, TimeToString(state.cooldownUntil));
+         return;
+        }
+
+      double factor = (state.lossStreak > 0) ? state.mgFactor : 1.0;
+      double scaled = baseVolume * factor;
+      if(MaxMartingaleLots > 0.0)
+         scaled = MathMin(scaled, MaxMartingaleLots);
+
+      if(MaxMartingaleRiskPercent > 0.0)
+        {
+         double tickValue = SymbolInfoDouble(symbol, SYMBOL_TRADE_TICK_VALUE);
+         double tickSize  = SymbolInfoDouble(symbol, SYMBOL_TRADE_TICK_SIZE);
+         double balance = AccountInfoDouble(ACCOUNT_BALANCE);
+         if(tickValue > 0.0 && tickSize > 0.0 && balance > 0.0)
+           {
+            double riskPerLot = (slDistance / tickSize) * tickValue;
+            if(riskPerLot > 0.0)
+              {
+               double maxRiskAmount = balance * (MaxMartingaleRiskPercent / 100.0);
+               double maxLots = maxRiskAmount / riskPerLot;
+               if(maxLots > 0.0)
+                  scaled = MathMin(scaled, maxLots);
+              }
+           }
+        }
+
+      volume = NormalizeVolume(symbol, scaled);
+      if(volume <= 0.0)
+         return;
+
+      PrintFormat("%s MG apply: streak=%d factor=%.2f baseLot=%.2f finalLot=%.2f", symbol, state.lossStreak, factor, baseVolume, volume);
+     }
 
    trade.SetExpertMagicNumber((int)SymbolMagic(symbol));
 
@@ -297,7 +423,18 @@ void EvaluateSymbol(SymbolState &state)
       placed = trade.Sell(volume, symbol, entryPrice, sl, tp, "HA_SELL");
 
    if(placed)
+     {
       PrintFormat("%s trade placed: %s %.2f lots at %.5f", symbol, trend > 0 ? "BUY" : "SELL", volume, entryPrice);
+      if(EnableMartingale && state.lossStreak == 0)
+        {
+         double point = SymbolInfoDouble(symbol, SYMBOL_POINT);
+         if(point > 0.0)
+           {
+            state.candidateSlPoints = slDistance / point;
+            state.candidateTpPoints = MathAbs(tp - entryPrice) / point;
+           }
+        }
+     }
    else
       PrintFormat("%s trade failed: %d", symbol, GetLastError());
   }
@@ -744,4 +881,218 @@ ulong SymbolMagic(const string symbol)
       hash += StringGetCharacter(symbol, i);
 
    return(MagicBase + (ulong)(hash % 1000));
+  }
+
+//+------------------------------------------------------------------+
+//| Martingale state helpers                                         |
+//+------------------------------------------------------------------+
+string MgKey(const string symbol, const string field)
+  {
+   return("HA_MG_" + symbol + "_" + field);
+  }
+
+void LoadMartingaleState(SymbolState &state)
+  {
+   string symbol = state.name;
+   if(GlobalVariableCheck(MgKey(symbol, "streak")))
+      state.lossStreak = (int)GlobalVariableGet(MgKey(symbol, "streak"));
+   if(GlobalVariableCheck(MgKey(symbol, "factor")))
+      state.mgFactor = GlobalVariableGet(MgKey(symbol, "factor"));
+   if(GlobalVariableCheck(MgKey(symbol, "lastClose")))
+      state.lastDealCloseTime = (datetime)GlobalVariableGet(MgKey(symbol, "lastClose"));
+   if(GlobalVariableCheck(MgKey(symbol, "cooldown")))
+      state.cooldownUntil = (datetime)GlobalVariableGet(MgKey(symbol, "cooldown"));
+   if(GlobalVariableCheck(MgKey(symbol, "slp")))
+      state.fixedSlPoints = GlobalVariableGet(MgKey(symbol, "slp"));
+   if(GlobalVariableCheck(MgKey(symbol, "tpp")))
+      state.fixedTpPoints = GlobalVariableGet(MgKey(symbol, "tpp"));
+
+   if(state.lossStreak < 0)
+      state.lossStreak = 0;
+   if(state.mgFactor <= 0.0)
+      state.mgFactor = 1.0;
+  }
+
+void SaveMartingaleState(const SymbolState &state)
+  {
+   string symbol = state.name;
+   GlobalVariableSet(MgKey(symbol, "streak"), (double)state.lossStreak);
+   GlobalVariableSet(MgKey(symbol, "factor"), state.mgFactor);
+   GlobalVariableSet(MgKey(symbol, "lastClose"), (double)state.lastDealCloseTime);
+   GlobalVariableSet(MgKey(symbol, "cooldown"), (double)state.cooldownUntil);
+   GlobalVariableSet(MgKey(symbol, "slp"), state.fixedSlPoints);
+   GlobalVariableSet(MgKey(symbol, "tpp"), state.fixedTpPoints);
+  }
+
+bool GetFixedDistancesFromHistory(const ulong positionId, const string symbol, const ulong magic, double &slPoints, double &tpPoints)
+  {
+   slPoints = 0.0;
+   tpPoints = 0.0;
+   if(positionId == 0)
+      return(false);
+
+   int ordersTotal = HistoryOrdersTotal();
+   double point = SymbolInfoDouble(symbol, SYMBOL_POINT);
+   if(point <= 0.0)
+      return(false);
+
+   for(int i=ordersTotal-1; i>=0; --i)
+     {
+      ulong ticket = HistoryOrderGetTicket(i);
+      if(ticket == 0)
+         continue;
+
+      if(HistoryOrderGetString(ticket, ORDER_SYMBOL) != symbol)
+         continue;
+
+      if((ulong)HistoryOrderGetInteger(ticket, ORDER_MAGIC) != magic)
+         continue;
+
+      if((ulong)HistoryOrderGetInteger(ticket, ORDER_POSITION_ID) != positionId)
+         continue;
+
+      long type = HistoryOrderGetInteger(ticket, ORDER_TYPE);
+      if(type != ORDER_TYPE_BUY && type != ORDER_TYPE_SELL)
+         continue;
+
+      double openPrice = HistoryOrderGetDouble(ticket, ORDER_PRICE_OPEN);
+      double sl = HistoryOrderGetDouble(ticket, ORDER_SL);
+      double tp = HistoryOrderGetDouble(ticket, ORDER_TP);
+      if(openPrice <= 0.0 || sl <= 0.0 || tp <= 0.0)
+         continue;
+
+      slPoints = MathAbs(openPrice - sl) / point;
+      tpPoints = MathAbs(tp - openPrice) / point;
+      if(slPoints > 0.0 && tpPoints > 0.0)
+         return(true);
+     }
+
+   return(false);
+  }
+
+bool UpdateMartingaleFromHistory(SymbolState &state)
+  {
+   if(!EnableMartingale)
+      return(false);
+
+   datetime now = TimeCurrent();
+   datetime from = now - (180 * 86400);
+   if(!HistorySelect(from, now))
+      return(false);
+
+   int dealsTotal = HistoryDealsTotal();
+   ulong latestDeal = 0;
+   datetime latestTime = 0;
+   double latestProfit = 0.0;
+   ulong positionId = 0;
+   ulong magic = SymbolMagic(state.name);
+
+   for(int i=0; i<dealsTotal; ++i)
+     {
+      ulong ticket = HistoryDealGetTicket(i);
+      if(ticket == 0)
+         continue;
+
+      if(HistoryDealGetString(ticket, DEAL_SYMBOL) != state.name)
+         continue;
+
+      if((ulong)HistoryDealGetInteger(ticket, DEAL_MAGIC) != magic)
+         continue;
+
+      if((ENUM_DEAL_ENTRY)HistoryDealGetInteger(ticket, DEAL_ENTRY) != DEAL_ENTRY_OUT)
+         continue;
+
+      datetime closeTime = (datetime)HistoryDealGetInteger(ticket, DEAL_TIME);
+      if(closeTime <= latestTime)
+         continue;
+
+      double profit = HistoryDealGetDouble(ticket, DEAL_PROFIT);
+      double commission = HistoryDealGetDouble(ticket, DEAL_COMMISSION);
+      double swap = HistoryDealGetDouble(ticket, DEAL_SWAP);
+
+      latestTime = closeTime;
+      latestDeal = ticket;
+      latestProfit = profit + commission + swap;
+      positionId = (ulong)HistoryDealGetInteger(ticket, DEAL_POSITION_ID);
+     }
+
+   if(latestDeal == 0 || latestTime <= state.lastDealCloseTime)
+      return(false);
+
+   state.lastDealCloseTime = latestTime;
+
+   if(latestProfit > 0.0 || (ResetOnBreakeven && latestProfit >= 0.0))
+     {
+      state.lossStreak = 0;
+      state.mgFactor = 1.0;
+      state.cooldownUntil = 0;
+      state.fixedSlPoints = 0.0;
+      state.fixedTpPoints = 0.0;
+      state.candidateSlPoints = 0.0;
+      state.candidateTpPoints = 0.0;
+      PrintFormat("%s MG reset after win, profit=%.2f, factor=1", state.name, latestProfit);
+      SaveMartingaleState(state);
+      return(true);
+     }
+
+   if(latestProfit < 0.0)
+     {
+      state.lossStreak += 1;
+      state.mgFactor *= MartingaleMultiplier;
+      if(state.mgFactor < 1.0)
+         state.mgFactor = 1.0;
+      if(MaxMartingaleLots > 0.0)
+         state.mgFactor = MathMin(state.mgFactor, MaxMartingaleLots);
+
+      if(state.lossStreak == 1 && FreezeSlTpDuringStreak)
+        {
+         double slPoints = 0.0;
+         double tpPoints = 0.0;
+         if(GetFixedDistancesFromHistory(positionId, state.name, magic, slPoints, tpPoints))
+           {
+            state.fixedSlPoints = slPoints;
+            state.fixedTpPoints = tpPoints;
+           }
+         else if(state.candidateSlPoints > 0.0 && state.candidateTpPoints > 0.0)
+           {
+            state.fixedSlPoints = state.candidateSlPoints;
+            state.fixedTpPoints = state.candidateTpPoints;
+           }
+         else
+           {
+            state.fixedSlPoints = 0.0;
+            state.fixedTpPoints = 0.0;
+           }
+        }
+
+      if(state.lossStreak >= MaxMartingaleSteps && MaxMartingaleSteps > 0)
+        {
+         state.cooldownUntil = TimeCurrent() + CooldownMinutesAfterMaxSteps * 60;
+         PrintFormat("%s MG reached max steps=%d, cooldown until %s", state.name, state.lossStreak, TimeToString(state.cooldownUntil));
+        }
+
+      PrintFormat("%s MG loss streak=%d, factor=%.2f, profit=%.2f", state.name, state.lossStreak, state.mgFactor, latestProfit);
+      SaveMartingaleState(state);
+      return(true);
+     }
+
+   SaveMartingaleState(state);
+   return(false);
+  }
+
+double NormalizeVolume(const string symbol, const double vol)
+  {
+   double minLot  = SymbolInfoDouble(symbol, SYMBOL_VOLUME_MIN);
+   double maxLot  = SymbolInfoDouble(symbol, SYMBOL_VOLUME_MAX);
+   double stepLot = SymbolInfoDouble(symbol, SYMBOL_VOLUME_STEP);
+   if(stepLot <= 0.0)
+      return(0.0);
+
+   double volume = MathMax(minLot, MathMin(vol, maxLot));
+   volume = MathFloor(volume / stepLot) * stepLot;
+
+   if(volume < minLot)
+      return(0.0);
+
+   return(volume);
   }
