@@ -187,7 +187,8 @@ void Log(string message)
 
 SymbolParams GetParamsForSymbol(const string symbol)
 {
-   string upper = StringToUpper(symbol);
+   string upper = symbol;
+   StringToUpper(upper);
    SymbolParams p;
    if(StringFind(upper, "XAU") >= 0)
    {

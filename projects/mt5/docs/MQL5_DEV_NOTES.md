@@ -60,10 +60,11 @@ This reference captures compile issues encountered while building the Heiken Ash
 
 6. **Use `StringToUpper` instead of `StringUpper`**
    - **Symptom:** `undeclared identifier` or parse errors around `StringUpper` on some builds.
-   - **Fix:** call `StringToUpper`.
+   - **Fix:** call `StringToUpper` with a mutable string variable (it returns `bool`).
    - **Example:**
      ```mql5
-     string upper = StringToUpper(symbol);
+     string upper = symbol;
+     StringToUpper(upper);
      ```
 
 ## General Guidance
