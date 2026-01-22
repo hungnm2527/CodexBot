@@ -29,7 +29,7 @@ bool InitIndicators(IndicatorHandles &h, const ENUM_TIMEFRAMES entry_tf, const E
    h.atr_entry    = iATR(_Symbol, entry_tf, atr_p);
    h.rsi_entry    = iRSI(_Symbol, entry_tf, rsi_p, PRICE_CLOSE);
    h.stoch_entry  = iStochastic(_Symbol, entry_tf, stoch_k, stoch_d, stoch_slow, MODE_SMA, STO_LOWHIGH);
-   h.bands_entry  = iBands(_Symbol, entry_tf, bb_p, 0, bb_dev, PRICE_CLOSE);
+   h.bands_entry  = iBands(_Symbol, entry_tf, bb_p, bb_dev, 0, PRICE_CLOSE);
 
    h.ema200_ctx = iMA(_Symbol, ctx_tf, ema200, 0, MODE_EMA, PRICE_CLOSE);
    h.ema20_ctx  = iMA(_Symbol, ctx_tf, ema20, 0, MODE_EMA, PRICE_CLOSE);
