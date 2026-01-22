@@ -1,4 +1,5 @@
-#pragma once
+#ifndef XAGUSD_STACK_CONFIG_MQH
+#define XAGUSD_STACK_CONFIG_MQH
 
 //=== Enums ===
 enum ENUM_EA_MODE
@@ -109,3 +110,4 @@ input color             InpPanelBgColor        = clrBlack;
 input color             InpPanelTextColor      = clrWhite;
 input int               InpPanelFontSize       = 9;
 
+#endif // XAGUSD_STACK_CONFIG_MQH

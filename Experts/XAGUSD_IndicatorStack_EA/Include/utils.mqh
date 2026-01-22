@@ -1,4 +1,5 @@
-#pragma once
+#ifndef XAGUSD_STACK_UTILS_MQH
+#define XAGUSD_STACK_UTILS_MQH
 
 bool IsNewBar(const ENUM_TIMEFRAMES tf, datetime &last_bar_time)
   {
@@ -73,3 +74,4 @@ string TimeToStringShort(const datetime t)
    return TimeToString(t, TIME_DATE|TIME_MINUTES);
   }
 
+#endif // XAGUSD_STACK_UTILS_MQH

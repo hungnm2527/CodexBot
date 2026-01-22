@@ -1,4 +1,5 @@
-#pragma once
+#ifndef XAGUSD_STACK_INDICATORS_MQH
+#define XAGUSD_STACK_INDICATORS_MQH
 
 struct IndicatorHandles
   {
@@ -86,3 +87,4 @@ bool CopyIndicatorValues(const int handle, const int buffer, const int start_shi
    return true;
   }
 
+#endif // XAGUSD_STACK_INDICATORS_MQH

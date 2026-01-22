@@ -1,4 +1,5 @@
-#pragma once
+#ifndef XAGUSD_STACK_UI_MQH
+#define XAGUSD_STACK_UI_MQH
 
 string UI_PREFIX = "XAGUSD_STACK_";
 
@@ -54,7 +55,7 @@ void UpdateUIPanel(const long chart_id, const color text_color, const int font_s
                    const string header, const string line1, const string line2, const string line3,
                    const string line4, const string line5, const string line6, const string line7)
   {
-   CreatePanelBackground(chart_id, UI_PREFIX + "BG", 320, 160, clrBlack);
+   CreatePanelBackground(chart_id, UI_PREFIX + "BG", 320, 160, InpPanelBgColor);
 
    int x = 12;
    int y = 12;
@@ -91,3 +92,4 @@ void DrawHLine(const long chart_id, const string name, const double price, const
    ObjectSetString(chart_id, name, OBJPROP_TEXT, text);
   }
 
+#endif // XAGUSD_STACK_UI_MQH

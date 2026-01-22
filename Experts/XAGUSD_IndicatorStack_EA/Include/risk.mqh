@@ -1,4 +1,5 @@
-#pragma once
+#ifndef XAGUSD_STACK_RISK_MQH
+#define XAGUSD_STACK_RISK_MQH
 
 struct DailyStats
   {
@@ -114,3 +115,4 @@ bool CalculateLotSize(const string symbol, const ENUM_RISK_MODE mode, const doub
    return NormalizeLot(symbol, lot_out);
   }
 
+#endif // XAGUSD_STACK_RISK_MQH
