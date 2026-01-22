@@ -49,6 +49,23 @@ This reference captures compile issues encountered while building the Heiken Ash
      int hour = dt.hour;
      ```
 
+5. **Enum values share the same namespace as variables**
+   - **Symptom:** compile errors like `identifier 'FixedLot' already used` when an enum value matches an input or variable name.
+   - **Fix:** prefix enum values (e.g., `LotModeFixedLot`, `RunnerTP_RR2`) to avoid collisions.
+   - **Example:**
+     ```mql5
+     enum LotMode { LotModeFixedLot, LotModeRiskPercent };
+     input LotMode lotMode = LotModeRiskPercent;
+     ```
+
+6. **Use `StringToUpper` instead of `StringUpper`**
+   - **Symptom:** `undeclared identifier` or parse errors around `StringUpper` on some builds.
+   - **Fix:** call `StringToUpper`.
+   - **Example:**
+     ```mql5
+     string upper = StringToUpper(symbol);
+     ```
+
 ## General Guidance
 
 - Always prefer dynamic arrays for buffers sized by inputs or runtime values.

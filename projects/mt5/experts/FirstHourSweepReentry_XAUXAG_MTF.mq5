@@ -12,8 +12,8 @@
 
 enum LotMode
 {
-   FixedLot,
-   RiskPercent
+   LotModeFixedLot,
+   LotModeRiskPercent
 };
 
 enum TPMode
@@ -26,8 +26,8 @@ enum TPMode
 enum RunnerTPMode
 {
    DailyOpen,
-   RR2,
-   None
+   RunnerTP_RR2,
+   RunnerTP_None
 };
 
 enum SweepState
@@ -49,7 +49,7 @@ input int EntryStartMinute = 5;
 input int EntryEndHour = 23;
 input int EntryEndMinute = 50;
 
-input LotMode lotMode = RiskPercent;
+input LotMode lotMode = LotModeRiskPercent;
 input double FixedLot = 0.01;
 input double RiskPercent = 1.0;
 input double MinLot = 0.01;
@@ -187,7 +187,7 @@ void Log(string message)
 
 SymbolParams GetParamsForSymbol(const string symbol)
 {
-   string upper = StringUpper(symbol);
+   string upper = StringToUpper(symbol);
    SymbolParams p;
    if(StringFind(upper, "XAU") >= 0)
    {
@@ -370,11 +370,19 @@ bool PassWickFilter(const MqlRates &bar, bool forSell)
    return ratio >= MinWickRatio;
 }
 
+bool SelectPositionByIndex(const int index)
+{
+   ulong ticket = PositionGetTicket(index);
+   if(ticket == 0)
+      return false;
+   return PositionSelectByTicket(ticket);
+}
+
 bool HasExistingPosition(const string symbol)
 {
    for(int i = PositionsTotal() - 1; i >= 0; --i)
    {
-      if(!PositionSelectByIndex(i))
+      if(!SelectPositionByIndex(i))
          continue;
       if(PositionGetString(POSITION_SYMBOL) != symbol)
          continue;
@@ -389,7 +397,7 @@ ulong GetExistingPositionTicket(const string symbol)
 {
    for(int i = PositionsTotal() - 1; i >= 0; --i)
    {
-      if(!PositionSelectByIndex(i))
+      if(!SelectPositionByIndex(i))
          continue;
       if(PositionGetString(POSITION_SYMBOL) != symbol)
          continue;
@@ -472,7 +480,7 @@ double NormalizeVolume(const string symbol, double volume)
 double CalculateLotSize(const string symbol, double slDistancePoints)
 {
    double volume = FixedLot;
-   if(lotMode == RiskPercent)
+   if(lotMode == LotModeRiskPercent)
    {
       double balance = AccountInfoDouble(ACCOUNT_BALANCE);
       double riskMoney = balance * (RiskPercent / 100.0);
@@ -608,7 +616,7 @@ void UpdatePositionManagement(SymbolState &state)
                         newTP = dailyOpen;
                   }
                }
-               else if(runnerMode == RR2)
+               else if(runnerMode == RunnerTP_RR2)
                {
                   double slDistancePoints = MathAbs(entry - sl) / point;
                   newTP = isBuy ? (entry + slDistancePoints * point * RR2) : (entry - slDistancePoints * point * RR2);
@@ -617,7 +625,7 @@ void UpdatePositionManagement(SymbolState &state)
                {
                   trade.PositionModify(state.symbol, sl, NormalizeDouble(newTP, (int)SymbolInfoInteger(state.symbol, SYMBOL_DIGITS)));
                }
-               else if(runnerMode == None)
+               else if(runnerMode == RunnerTP_None)
                {
                   trade.PositionModify(state.symbol, sl, 0.0);
                }
