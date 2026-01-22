@@ -284,7 +284,10 @@ void ManageOpenPositions(const double atr)
 
    for(int i = PositionsTotal() - 1; i >= 0; i--)
      {
-      if(!PositionSelectByIndex(i))
+      ulong ticket = PositionGetTicket(i);
+      if(ticket == 0)
+         continue;
+      if(!PositionSelectByTicket(ticket))
          continue;
       if(PositionGetString(POSITION_SYMBOL) != _Symbol)
          continue;
@@ -359,7 +362,7 @@ bool CanTradeNow()
    return true;
   }
 
-void PlaceTrade(const bool is_buy, const double sl_price, const double tp_price, const string comment)
+void PlaceTrade(const bool is_buy, double sl_price, const double tp_price, const string comment)
   {
    double price = is_buy ? SymbolInfoDouble(_Symbol, SYMBOL_ASK) : SymbolInfoDouble(_Symbol, SYMBOL_BID);
    double sl_points = MathAbs(price - sl_price) / _Point;
@@ -491,4 +494,3 @@ void OnTick()
         }
      }
   }
-

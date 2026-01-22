@@ -40,7 +40,10 @@ int CountOpenPositions(const string symbol, const ulong magic)
    int count = 0;
    for(int i = PositionsTotal() - 1; i >= 0; i--)
      {
-      if(!PositionSelectByIndex(i))
+      ulong ticket = PositionGetTicket(i);
+      if(ticket == 0)
+         continue;
+      if(!PositionSelectByTicket(ticket))
          continue;
       string sym = PositionGetString(POSITION_SYMBOL);
       if(sym != symbol)
@@ -57,7 +60,10 @@ bool HasOppositePosition(const string symbol, const ulong magic, const ENUM_POSI
   {
    for(int i = PositionsTotal() - 1; i >= 0; i--)
      {
-      if(!PositionSelectByIndex(i))
+      ulong ticket = PositionGetTicket(i);
+      if(ticket == 0)
+         continue;
+      if(!PositionSelectByTicket(ticket))
          continue;
       if(PositionGetString(POSITION_SYMBOL) != symbol)
          continue;
