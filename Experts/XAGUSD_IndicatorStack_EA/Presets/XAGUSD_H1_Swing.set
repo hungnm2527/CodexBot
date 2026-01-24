@@ -1,0 +1,17 @@
+InpMode=0
+InpEntryTF=16385
+InpContextTF=16388
+InpADXTrendThreshold=25.0
+InpMaxSpreadPoints=50
+InpMinATRPoints=35
+InpUseSessionFilter=false
+InpRiskMode=1
+InpRiskPercent=0.5
+InpFixedLot=0.01
+InpSL_ATR_Mult=2.0
+InpRR=2.0
+InpCooldownMinutes=60
+InpMaxTradesPerDay=2
+InpUseStoch=false
+InpUseBands=true
+InpUseSqueeze=false
