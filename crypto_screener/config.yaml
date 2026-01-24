@@ -1,0 +1,30 @@
+api:
+  base_url: "https://api.coingecko.com/api/v3"
+  request_timeout_seconds: 30
+  per_page: 250
+  throttle_seconds: 1.2
+  retries:
+    max_attempts: 5
+    min_seconds: 1
+    max_seconds: 10
+universe:
+  target_size: 500
+  vs_currency: "usd"
+  exclude_stablecoins: true
+  stablecoin_symbols:
+    - usdt
+    - usdc
+    - dai
+    - busd
+    - tusd
+    - usdp
+    - gusd
+    - usdd
+    - frax
+    - usde
+output:
+  directory: "outputs/universe"
+  filename: "universe.csv"
+cache:
+  enabled: true
+  directory: "data_cache"
