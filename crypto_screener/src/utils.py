@@ -10,6 +10,11 @@ from typing import Any, Dict, Iterable, List
 
 import yaml
 from dotenv import load_dotenv
+import os
+from typing import Union
+
+
+PathLike = Union[str, os.PathLike]
 
 
 @dataclass(frozen=True)
@@ -125,7 +130,9 @@ def load_config(config_path: Path) -> AppConfig:
 def ensure_directory(path: Path) -> None:
     """Ensure a directory exists."""
     path.mkdir(parents=True, exist_ok=True)
-
+def ensure_dir(path: PathLike) -> None:
+    """Ensure a directory exists. Accepts a folder path or a Path object."""
+    Path(path).mkdir(parents=True, exist_ok=True)
 
 def make_cache_key(endpoint: str, params: Dict[str, Any]) -> str:
     """Create a deterministic cache key from endpoint and params."""
@@ -166,3 +173,4 @@ def validate_market_response(records: Iterable[Dict[str, Any]], required_fields:
             )
         validated.append(record)
     return validated
+
