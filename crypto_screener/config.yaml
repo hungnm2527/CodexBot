@@ -1,0 +1,84 @@
+api:
+  base_url: "https://api.coingecko.com/api/v3"
+  request_timeout_seconds: 30
+  per_page: 250
+  throttle_seconds: 1.2
+  retries:
+    max_attempts: 5
+    min_seconds: 1
+    max_seconds: 10
+universe:
+  target_size: 500
+  top_n: 500
+  vs_currency: "usd"
+  exclude_stablecoins: true
+  stablecoin_symbols:
+    - usdt
+    - usdc
+    - dai
+    - busd
+    - tusd
+    - usdp
+    - gusd
+    - usdd
+    - frax
+    - usde
+output:
+  directory: "outputs/universe"
+  filename: "universe.csv"
+cache:
+  enabled: true
+  directory: "data_cache"
+filters:
+  min_market_cap_usd: 200000000
+  min_volume_24h_usd: 10000000
+  max_market_cap_rank: null # set to a number (e.g., 300) if you want
+paths:
+  outputs_dir: "outputs"
+  universe_csv: "outputs/universe/universe.csv"
+  filtered_dir: "outputs/filtered"
+  filtered_universe_csv: "outputs/filtered/filtered_universe.csv"
+  rejects_csv: "outputs/filtered/rejects.csv"
+  features_dir: "outputs/features"
+  features_csv: "outputs/features/features.csv"
+  rankings_dir: "outputs/rankings"
+  ranked_momentum_csv: "outputs/rankings/ranked_momentum.csv"
+  ranked_growth_csv: "outputs/rankings/ranked_growth.csv"
+  suggestions_dir: "outputs/suggestions"
+  suggested_today_csv: "outputs/suggestions/suggested_today.csv"
+  watchlist_csv: "outputs/suggestions/watchlist.csv"
+features:
+  lookback_days: [7, 30, 90]
+  vs_currency: "usd"
+  cache_enabled: true
+  cache_ttl_hours: 24
+  request_delay_s: 20 # increase if you hit 429
+  max_coins: 50 # set 100 to test fast; null = all filtered
+scoring:
+  # Momentum ranking (high risk / big upside)
+  momentum_weights:
+    ret_90d: 0.45
+    rs_90d_vs_btc: 0.30
+    ret_30d: 0.15
+    vol_24h: 0.10
+  # Growth v1 (still mostly momentum until we add TVL/fees in Step 4)
+  growth_weights:
+    ret_90d: 0.35
+    rs_90d_vs_btc: 0.25
+    ret_30d: 0.20
+    market_cap: 0.10
+    vol_24h: 0.10
+coingecko:
+  base_url: "https://api.coingecko.com/api/v3"
+timing_gate:
+  # High-risk default: only want coins outperforming BTC and trending up
+  require_ret_90d_positive: true
+  require_rs_90d_vs_btc_positive: true
+  # Avoid coins that are “too extended” (optional; keep mild)
+  max_ret_30d: 2.0          # 2.0 = +200% in 30D; above this -> watchlist
+  # Minimum data quality
+  min_non_null_required: 3  # how many of these must be non-null: ret_7d, ret_30d, ret_90d, rs_90d_vs_btc
+  # Output controls
+  top_n_momentum: 10
+  top_n_growth: 10
+  
